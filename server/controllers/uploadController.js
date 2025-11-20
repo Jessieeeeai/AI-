@@ -38,10 +38,27 @@ const storage = multer.diskStorage({
 
 // 文件过滤器
 const fileFilter = (req, file, cb) => {
-  const allowedAudioTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/m4a', 'audio/x-m4a'];
+  const allowedAudioTypes = [
+    'audio/mpeg', 
+    'audio/mp3', 
+    'audio/wav', 
+    'audio/m4a', 
+    'audio/x-m4a',
+    'audio/mp4',        // M4A 可能被识别为 mp4
+    'audio/x-mp4',
+    'audio/aac'         // M4A 实际是 AAC 编码
+  ];
   const allowedVideoTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo'];
   
-  if (allowedAudioTypes.includes(file.mimetype) || allowedVideoTypes.includes(file.mimetype)) {
+  // 也检查文件扩展名作为备用验证
+  const ext = path.extname(file.originalname).toLowerCase();
+  const allowedAudioExts = ['.mp3', '.wav', '.m4a'];
+  const allowedVideoExts = ['.mp4', '.mov', '.avi'];
+  
+  const isValidAudio = allowedAudioTypes.includes(file.mimetype) || allowedAudioExts.includes(ext);
+  const isValidVideo = allowedVideoTypes.includes(file.mimetype) || allowedVideoExts.includes(ext);
+  
+  if (isValidAudio || isValidVideo) {
     cb(null, true);
   } else {
     cb(new Error('不支持的文件格式'), false);
@@ -70,8 +87,12 @@ export const uploadVoice = async (req, res) => {
     const userId = req.user.userId;
     const file = req.file;
     
-    // 验证文件类型
-    if (!file.mimetype.startsWith('audio/')) {
+    // 验证文件类型（MIME 类型或扩展名）
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedExts = ['.mp3', '.wav', '.m4a'];
+    const isAudio = file.mimetype.startsWith('audio/') || allowedExts.includes(ext);
+    
+    if (!isAudio) {
       // 删除文件
       fs.unlinkSync(file.path);
       return res.status(400).json({ 
@@ -145,8 +166,12 @@ export const uploadTemplate = async (req, res) => {
     const userId = req.user.userId;
     const file = req.file;
     
-    // 验证文件类型
-    if (!file.mimetype.startsWith('video/')) {
+    // 验证文件类型（MIME 类型或扩展名）
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedExts = ['.mp4', '.mov'];
+    const isVideo = file.mimetype.startsWith('video/') || allowedExts.includes(ext);
+    
+    if (!isVideo) {
       fs.unlinkSync(file.path);
       return res.status(400).json({ 
         error: 'invalid_file_type',

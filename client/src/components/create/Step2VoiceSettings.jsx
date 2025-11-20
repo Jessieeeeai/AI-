@@ -20,9 +20,12 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
     const file = e.target.files[0];
     if (!file) return;
 
-    // 验证文件类型
-    const allowedTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/m4a', 'audio/x-m4a'];
-    if (!allowedTypes.includes(file.type)) {
+    // 验证文件类型 - 使用文件扩展名验证（更可靠）
+    const fileName = file.name.toLowerCase();
+    const allowedExtensions = ['.mp3', '.wav', '.m4a'];
+    const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+    
+    if (!hasValidExtension) {
       setUploadError('只支持 MP3, WAV, M4A 格式的音频文件');
       return;
     }
@@ -100,7 +103,7 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
             <input
               ref={fileInputRef}
               type="file"
-              accept="audio/mp3,audio/mpeg,audio/wav,audio/m4a"
+              accept=".mp3,.wav,.m4a,audio/mpeg,audio/mp3,audio/wav,audio/x-m4a,audio/mp4"
               onChange={handleFileSelect}
               className="hidden"
             />
