@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 全局样式 */
+@layer base {
+  body {
+    @apply bg-gradient-main min-h-screen font-sans text-gray-900;
+  }
+}
+
+/* 自定义组件样式 */
+@layer components {
+  /* 玻璃态射卡片 */
+  .glass-card {
+    @apply bg-gradient-card backdrop-blur-md rounded-3xl shadow-card border border-white/20;
+  }
+
+  /* 渐变按钮 */
+  .btn-gradient {
+    @apply bg-gradient-button text-white font-semibold px-6 py-3 rounded-full shadow-glow hover:shadow-lg transition-all duration-300 hover:scale-105;
+  }
+
+  /* 输入框 */
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none transition-colors bg-white/80;
+  }
+
+  /* 浮动装饰圆点 */
+  .floating-dot {
+    @apply absolute rounded-full animate-float;
+  }
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(243, 232, 255, 0.3);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #8B5CF6, #EC4899);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #7C3AED, #DB2777);
+}
+
+/* 加载动画 */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(to right, #f3e8ff 4%, #e9d5ff 25%, #f3e8ff 36%);
+  background-size: 1000px 100%;
+}
