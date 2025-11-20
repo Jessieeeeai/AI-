@@ -1,9 +1,13 @@
-import { useState } from 'react';
-import { Video, Play, Upload } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Video, Play, Upload, Loader, CheckCircle, XCircle } from 'lucide-react';
+import { uploadService } from '../../services/api';
 
 export default function Step3TemplateSelect({ data, updateData, onNext, onPrev }) {
   const [selectedTemplate, setSelectedTemplate] = useState(data.templateId || 'template_1');
-  const [showCustomUpload, setShowCustomUpload] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [uploadedTemplate, setUploadedTemplate] = useState(null);
+  const fileInputRef = useRef(null);
 
   // 10个预设模板（你会上传实际的视频）
   const templates = [
@@ -21,7 +25,41 @@ export default function Step3TemplateSelect({ data, updateData, onNext, onPrev }
 
   const handleTemplateSelect = (templateId) => {
     setSelectedTemplate(templateId);
+    setUploadedTemplate(null);
     updateData({ templateId, isCustomTemplate: false });
+  };
+
+  const handleFileSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // 验证文件类型
+    const allowedTypes = ['video/mp4', 'video/quicktime'];
+    if (!allowedTypes.includes(file.type)) {
+      setUploadError('只支持 MP4, MOV 格式的视频文件');
+      return;
+    }
+
+    // 验证文件大小 (50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      setUploadError('文件大小不能超过50MB');
+      return;
+    }
+
+    setUploading(true);
+    setUploadError('');
+
+    try {
+      const response = await uploadService.uploadTemplate(file);
+      setUploadedTemplate(response);
+      setSelectedTemplate(null);
+      updateData({ templateId: response.templateId, isCustomTemplate: true });
+      alert('模板视频上传成功！');
+    } catch (error) {
+      setUploadError(error.message || '上传失败，请稍后重试');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleNext = () => {
@@ -85,16 +123,66 @@ export default function Step3TemplateSelect({ data, updateData, onNext, onPrev }
           <span className="text-sm text-primary-pink ml-2">(+50积分/次)</span>
         </h3>
         
-        <div className="border-2 border-dashed border-purple-300 rounded-xl p-8 text-center hover:border-primary-purple transition-colors cursor-pointer">
-          <Upload className="w-12 h-12 mx-auto mb-4 text-primary-purple" />
-          <p className="font-semibold mb-2">上传你的人像视频</p>
-          <p className="text-sm text-gray-600 mb-4">
-            支持 MP4, MOV 格式 | 5-10秒 | 720p以上 | &lt;50MB
-          </p>
-          <button className="px-6 py-2 bg-purple-100 text-primary-purple rounded-full font-semibold hover:bg-purple-200 transition-colors">
-            📤 选择文件上传
-          </button>
+        <div className="border-2 border-dashed border-purple-300 rounded-xl p-8 text-center hover:border-primary-purple transition-colors">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="video/mp4,video/quicktime"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+
+          {!uploadedTemplate && !uploading && (
+            <>
+              <Upload className="w-12 h-12 mx-auto mb-4 text-primary-purple" />
+              <p className="font-semibold mb-2">上传你的人像视频</p>
+              <p className="text-sm text-gray-600 mb-4">
+                支持 MP4, MOV 格式 | 5-10秒 | 720p以上 | &lt;50MB
+              </p>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-6 py-2 bg-purple-100 text-primary-purple rounded-full font-semibold hover:bg-purple-200 transition-colors"
+              >
+                📤 选择文件上传
+              </button>
+            </>
+          )}
+
+          {uploading && (
+            <>
+              <Loader className="w-12 h-12 mx-auto mb-4 text-primary-purple animate-spin" />
+              <p className="font-semibold">上传中...</p>
+              <p className="text-sm text-gray-600 mt-2">正在上传视频文件，请稍候</p>
+            </>
+          )}
+
+          {uploadedTemplate && (
+            <>
+              <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
+              <p className="font-semibold text-green-600 mb-2">上传成功！</p>
+              <p className="text-sm text-gray-600 mb-4">
+                模板视频已上传，正在处理中
+              </p>
+              <button
+                onClick={() => {
+                  setUploadedTemplate(null);
+                  setSelectedTemplate('template_1');
+                  updateData({ templateId: 'template_1', isCustomTemplate: false });
+                }}
+                className="px-6 py-2 bg-red-100 text-red-600 rounded-full font-semibold hover:bg-red-200 transition-colors"
+              >
+                🗑️ 重新选择
+              </button>
+            </>
+          )}
         </div>
+
+        {uploadError && (
+          <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start space-x-2">
+            <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-600">{uploadError}</p>
+          </div>
+        )}
 
         <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
           <p className="text-sm text-yellow-800">

@@ -95,6 +95,18 @@ export const uploadService = {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
   },
+  
+  getUserVoices: () =>
+    api.get('/upload/voices'),
+  
+  getUserTemplates: () =>
+    api.get('/upload/templates'),
+  
+  deleteVoice: (voiceId) =>
+    api.delete(`/upload/voice/${voiceId}`),
+  
+  deleteTemplate: (templateId) =>
+    api.delete(`/upload/template/${templateId}`),
 };
 
 // 管理员服务
