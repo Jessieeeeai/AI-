@@ -30,8 +30,8 @@ export default function Navbar() {
             <Link to="/" className="text-gray-700 hover:text-primary-purple transition-colors">
               首页
             </Link>
-            <Link to="/create" className="text-gray-700 hover:text-primary-purple transition-colors">
-              创作
+            <Link to="/create-wizard" className="text-gray-700 hover:text-primary-purple transition-colors">
+              AI创作
             </Link>
             {isAuthenticated && (
               <Link to="/dashboard" className="text-gray-700 hover:text-primary-purple transition-colors">

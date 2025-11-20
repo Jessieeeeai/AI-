@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CreatePage from './pages/CreatePage';
+import CreateWizard from './pages/CreateWizard';
 import DashboardPage from './pages/DashboardPage';
 import RechargePage from './pages/RechargePage';
 import CreditsPage from './pages/CreditsPage';
@@ -36,6 +37,7 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/create" element={<CreatePage />} />
+            <Route path="/create-wizard" element={<CreateWizard />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/recharge" element={<RechargePage />} />
             <Route path="/credits" element={<CreditsPage />} />
