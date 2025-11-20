@@ -18,7 +18,7 @@ const packages = {
 // 创建 Stripe Checkout Session
 export const createStripeCheckout = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { packageId } = req.body;
 
     if (!stripe) {
@@ -130,7 +130,7 @@ export const handleStripeWebhook = async (req, res) => {
 export const verifyPayment = async (req, res) => {
   try {
     const { sessionId } = req.query;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     if (!stripe) {
       return res.status(500).json({ 
@@ -176,7 +176,7 @@ export const verifyPayment = async (req, res) => {
 // 创建加密货币支付订单（NOWPayments）
 export const createCryptoPayment = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { packageId } = req.body;
 
     // 验证套餐
@@ -224,7 +224,7 @@ export const createCryptoPayment = async (req, res) => {
 // 获取交易历史
 export const getTransactionHistory = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { limit = 20, offset = 0 } = req.query;
 
     const transactions = await dbRun(

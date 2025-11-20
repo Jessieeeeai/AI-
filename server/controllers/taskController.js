@@ -5,7 +5,7 @@ import { dbRun } from '../config/database.js';
 // 创建视频生成任务
 export const createTask = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { text, voiceSettings, voiceId, templateId, isCustomTemplate } = req.body;
 
     // 验证输入
@@ -94,7 +94,7 @@ export const createTask = async (req, res) => {
 export const getTask = async (req, res) => {
   try {
     const { taskId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const task = await Task.findById(taskId);
 
@@ -130,7 +130,7 @@ export const getTask = async (req, res) => {
 // 获取用户的任务列表
 export const getUserTasks = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { status, limit = 20, offset = 0 } = req.query;
 
     const filters = {
@@ -166,7 +166,7 @@ export const getUserTasks = async (req, res) => {
 export const deleteTask = async (req, res) => {
   try {
     const { taskId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // 获取任务信息（用于退款判断）
     const task = await Task.findById(taskId);

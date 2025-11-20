@@ -84,7 +84,7 @@ export const uploadVoice = async (req, res) => {
       });
     }
 
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const file = req.file;
     
     // 验证文件类型（MIME 类型或扩展名）
@@ -163,7 +163,7 @@ export const uploadTemplate = async (req, res) => {
       });
     }
 
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const file = req.file;
     
     // 验证文件类型（MIME 类型或扩展名）
@@ -236,7 +236,7 @@ export const uploadTemplate = async (req, res) => {
 // 获取用户的声音列表
 export const getUserVoices = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     
     const voices = await dbRun(
       'SELECT * FROM user_voices WHERE user_id = ? ORDER BY created_at DESC',
@@ -260,7 +260,7 @@ export const getUserVoices = async (req, res) => {
 // 获取用户的模板列表
 export const getUserTemplates = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     
     const templates = await dbRun(
       'SELECT * FROM user_templates WHERE user_id = ? ORDER BY created_at DESC',
@@ -285,7 +285,7 @@ export const getUserTemplates = async (req, res) => {
 export const deleteVoice = async (req, res) => {
   try {
     const { voiceId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // 获取声音信息
     const voice = await dbGet(
@@ -327,7 +327,7 @@ export const deleteVoice = async (req, res) => {
 export const deleteTemplate = async (req, res) => {
   try {
     const { templateId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // 获取模板信息
     const template = await dbGet(
