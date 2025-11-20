@@ -88,6 +88,38 @@ videoai-pro/
 
 ## 部署
 
+### 🚀 RunPod GPU部署（推荐）
+
+**一键部署到RunPod GPU服务器**：
+
+```bash
+# 1. 推送代码到GitHub
+./push_to_github.sh
+
+# 2. 在RunPod创建GPU Pod（RTX 3090, 24GB）
+# 访问: https://www.runpod.io/
+
+# 3. 在RunPod中一键部署
+cd /workspace
+git clone <你的仓库地址>
+cd videoai-webapp
+./deploy_runpod.sh
+```
+
+**详细文档**：
+- 📖 [5分钟快速部署](RUNPOD_QUICKSTART.md)
+- 📋 [完整部署指南](RUNPOD_DEPLOYMENT.md)
+- 💰 [费用详解](RUNPOD_PRICING.md)
+- ✅ [部署检查清单](DEPLOYMENT_CHECKLIST.md)
+- 🔧 [故障排除](TROUBLESHOOTING.md)
+
+**费用参考**：
+- RTX 3090: $0.34/小时 (约2.4元/小时)
+- 每天8小时: 约19元/天
+- 每月: 约580元/月
+
+---
+
 ### 前端部署 (Vercel)
 
 ```bash
@@ -111,10 +143,6 @@ pm2 start server/index.js --name videoai-pro
 pm2 startup
 pm2 save
 ```
-
-### GPU服务器部署
-
-参考 `docs/gpu-deployment.md`
 
 ## API文档
 

@@ -13,11 +13,20 @@ export default defineConfig({
     port: 5173,
     host: '0.0.0.0',
     strictPort: true,
+    allowedHosts: [
+      '.sandbox.novita.ai',
+      'localhost',
+      '127.0.0.1'
+    ],
     hmr: {
       clientPort: 5173
     },
     proxy: {
       '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true
+      },
+      '/public': {
         target: 'http://localhost:3001',
         changeOrigin: true
       }

@@ -109,6 +109,23 @@ export const uploadService = {
     api.delete(`/upload/template/${templateId}`),
 };
 
+// 预览服务
+export const previewService = {
+  generateTTS: (text, voiceId, voiceSettings) =>
+    api.post('/preview/tts', { text, voiceId, voiceSettings }, {
+      responseType: 'blob' // 接收音频文件
+    }),
+};
+
+// 优化服务
+export const optimizeService = {
+  optimizeScript: (originalText, style = 'humorous') =>
+    api.post('/optimize/script', { originalText, style }),
+  
+  analyzeText: (text) =>
+    api.post('/optimize/analyze', { text }),
+};
+
 // 管理员服务
 export const adminService = {
   getStats: () => 

@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Mic, Volume2, Gauge, Music, Upload, Loader, CheckCircle, XCircle } from 'lucide-react';
-import { uploadService } from '../../services/api';
+import { uploadService, previewService } from '../../services/api';
 
 export default function Step2VoiceSettings({ data, updateData, onNext, onPrev }) {
   const [settings, setSettings] = useState(data.voiceSettings);
@@ -8,7 +8,9 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [uploadedVoice, setUploadedVoice] = useState(null);
+  const [isPreviewing, setIsPreviewing] = useState(false);
   const fileInputRef = useRef(null);
+  const audioRef = useRef(null);
 
   const updateSetting = (key, value) => {
     const newSettings = { ...settings, [key]: value };
@@ -51,7 +53,142 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
     }
   };
 
+  const handlePreview = async () => {
+    // 如果上传了自定义声音，调用TTS API生成预览
+    if (useCustomVoice && uploadedVoice && uploadedVoice.voiceId) {
+      setIsPreviewing(true);
+      
+      // 停止之前的播放
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      
+      try {
+        // 预览文本
+        const previewText = data.text && data.text.trim().length > 0
+          ? data.text.substring(0, 100) // 取前100字
+          : '你好，这是使用您的声音生成的预览效果。欢迎使用VideoAI Pro！';
+        
+        console.log('🎤 生成声音克隆预览:', {
+          voiceId: uploadedVoice.voiceId,
+          text: previewText.substring(0, 20) + '...',
+          settings
+        });
+        
+        // 调用TTS预览API
+        const audioBlob = await previewService.generateTTS(
+          previewText,
+          uploadedVoice.voiceId,
+          settings
+        );
+        
+        // 创建音频URL
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        // 创建或使用现有的audio元素
+        if (!audioRef.current) {
+          audioRef.current = new Audio();
+        }
+        
+        audioRef.current.src = audioUrl;
+        audioRef.current.volume = settings.volume;
+        
+        // 监听播放结束
+        audioRef.current.onended = () => {
+          setIsPreviewing(false);
+          URL.revokeObjectURL(audioUrl); // 清理URL
+        };
+        
+        // 监听错误
+        audioRef.current.onerror = () => {
+          setIsPreviewing(false);
+          URL.revokeObjectURL(audioUrl);
+          alert('播放失败');
+        };
+        
+        // 播放
+        await audioRef.current.play();
+        
+      } catch (error) {
+        setIsPreviewing(false);
+        console.error('预览生成失败:', error);
+        alert('预览失败：' + (error.response?.data?.message || error.message));
+      }
+      
+      return;
+    }
+    
+    // 否则使用系统TTS预览
+    if ('speechSynthesis' in window) {
+      setIsPreviewing(true);
+      
+      // 停止之前的播放
+      window.speechSynthesis.cancel();
+      
+      // 创建语音合成
+      const utterance = new SpeechSynthesisUtterance('你好，这是语音预览效果。欢迎使用VideoAI Pro！');
+      
+      // 应用设置
+      utterance.pitch = settings.pitch;
+      utterance.rate = settings.speed;
+      utterance.volume = settings.volume;
+      
+      // 设置语言
+      utterance.lang = 'zh-CN';
+      
+      // 监听结束事件
+      utterance.onend = () => {
+        setIsPreviewing(false);
+      };
+      
+      utterance.onerror = () => {
+        setIsPreviewing(false);
+        alert('预览失败，请检查浏览器是否支持语音合成');
+      };
+      
+      // 播放
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert('您的浏览器不支持语音预览功能');
+    }
+  };
+
+  const handleReset = () => {
+    // 重置为默认值
+    const defaultSettings = {
+      happiness: 0.7,
+      sadness: 0.1,
+      anger: 0.0,
+      surprise: 0.3,
+      pitch: 1.0,
+      speed: 1.0,
+      volume: 1.0,
+    };
+    
+    setSettings(defaultSettings);
+    updateData({ voiceSettings: defaultSettings });
+    
+    // 停止所有预览
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setIsPreviewing(false);
+  };
+
   const handleNext = () => {
+    // 停止所有预览
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
     onNext();
   };
 
@@ -325,13 +462,40 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
       </div>
 
       {/* 试听按钮 */}
-      <div className="flex items-center justify-center space-x-4 py-4 bg-purple-50 rounded-xl">
-        <button className="px-6 py-2 bg-white rounded-full text-primary-purple font-semibold hover:shadow-md transition-all">
-          🎧 试听
-        </button>
-        <button className="px-6 py-2 bg-white rounded-full text-primary-purple font-semibold hover:shadow-md transition-all">
-          🔄 重置
-        </button>
+      <div className="space-y-2">
+        <div className="flex items-center justify-center space-x-4 py-4 bg-purple-50 rounded-xl">
+          <button 
+            onClick={handlePreview}
+            disabled={isPreviewing}
+            className={`px-6 py-2 bg-white rounded-full text-primary-purple font-semibold hover:shadow-md transition-all ${
+              isPreviewing ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            {isPreviewing ? '🔊 播放中...' : '🎧 试听'}
+          </button>
+          <button 
+            onClick={handleReset}
+            className="px-6 py-2 bg-white rounded-full text-primary-purple font-semibold hover:shadow-md transition-all"
+          >
+            🔄 重置
+          </button>
+        </div>
+        
+        {/* 试听提示 */}
+        <div className="text-center text-sm text-gray-600">
+          {useCustomVoice && uploadedVoice ? (
+            <div className="space-y-1">
+              <p>✨ 试听将使用您的声音克隆朗读测试文本</p>
+              <p className="text-xs text-gray-500">
+                {data.text && data.text.trim().length > 0 
+                  ? `（使用您输入的文本前100字）` 
+                  : `（使用默认测试文本）`}
+              </p>
+            </div>
+          ) : (
+            <p>💡 试听使用系统声音预览音调、语速、音量效果</p>
+          )}
+        </div>
       </div>
 
       {/* 导航按钮 */}

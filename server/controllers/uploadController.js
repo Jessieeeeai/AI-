@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
-import { dbRun, dbGet } from '../config/database.js';
+import { dbRun, dbGet, dbAll } from '../config/database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -238,7 +238,7 @@ export const getUserVoices = async (req, res) => {
   try {
     const userId = req.user.id;
     
-    const voices = await dbRun(
+    const voices = await dbAll(
       'SELECT * FROM user_voices WHERE user_id = ? ORDER BY created_at DESC',
       [userId]
     );
@@ -262,7 +262,7 @@ export const getUserTemplates = async (req, res) => {
   try {
     const userId = req.user.id;
     
-    const templates = await dbRun(
+    const templates = await dbAll(
       'SELECT * FROM user_templates WHERE user_id = ? ORDER BY created_at DESC',
       [userId]
     );
