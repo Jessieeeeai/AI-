@@ -166,6 +166,27 @@ function initDatabase() {
   `);
 
   console.log('✅ 数据库表初始化完成');
+  
+  // 运行迁移（添加新字段）
+  runMigrations();
+}
+
+// 运行数据库迁移
+async function runMigrations() {
+  try {
+    // 迁移1：添加tasks表分段字段
+    const { migrateUp: migrateSegmentation } = await import('../migrations/add_segmentation_fields.js');
+    await migrateSegmentation();
+    
+    // 迁移2：更新drafts表
+    const { migrateUp: migrateDrafts } = await import('../migrations/update_drafts_table.js');
+    await migrateDrafts();
+    
+    console.log('✅ 所有数据库迁移完成');
+  } catch (error) {
+    console.error('⚠️  数据库迁移失败:', error.message);
+    // 不阻止应用启动
+  }
 }
 
 // Promise化的数据库方法
