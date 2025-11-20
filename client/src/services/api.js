@@ -126,6 +126,24 @@ export const optimizeService = {
     api.post('/optimize/analyze', { text }),
 };
 
+// 分段服务
+export const segmentationService = {
+  analyzeSegmentation: (text, strategy = 'auto') =>
+    api.post('/segmentation/analyze', { text, strategy }),
+  
+  manualSegmentation: (text, splitPoints) =>
+    api.post('/segmentation/manual', { text, splitPoints }),
+  
+  getStrategies: () =>
+    api.get('/segmentation/strategies'),
+  
+  validateSegmentation: (segments, strategy = 'auto') =>
+    api.post('/segmentation/validate', { segments, strategy }),
+  
+  estimateCost: (text, strategy = 'auto') =>
+    api.post('/segmentation/estimate', { text, strategy }),
+};
+
 // 管理员服务
 export const adminService = {
   getStats: () => 
