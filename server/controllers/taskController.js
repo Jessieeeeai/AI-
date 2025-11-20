@@ -1,6 +1,7 @@
 import { Task } from '../models/Task.js';
 import { User } from '../models/User.js';
 import { dbRun } from '../config/database.js';
+import { queueVideoGeneration } from '../services/videoGenerationService.js';
 
 // 创建视频生成任务
 export const createTask = async (req, res) => {
@@ -70,15 +71,17 @@ export const createTask = async (req, res) => {
     // 更新用户等级
     await User.getLevel(userId);
 
-    // TODO: 将任务加入队列，触发视频生成
-    // 这里应该调用视频生成服务（IndexTTS2 + ComfyUI）
+    // ✅ 将任务加入视频生成队列
+    console.log(`📤 将任务 ${taskId} 加入生成队列...`);
+    queueVideoGeneration(taskId);
 
     res.status(201).json({
       success: true,
       taskId,
       message: '任务创建成功，正在生成中',
-      estimatedTime: '8-12分钟',
-      costBreakdown: costData
+      estimatedTime: `${Math.ceil(costData.duration / 60) * 2}-${Math.ceil(costData.duration / 60) * 3}分钟`,
+      costBreakdown: costData,
+      segments: costData.segments
     });
 
   } catch (error) {
