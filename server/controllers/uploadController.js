@@ -129,9 +129,14 @@ export const uploadVoice = async (req, res) => {
 
     res.json({
       success: true,
-      voiceId,
-      message: '音频上传成功，正在处理中',
-      audioUrl
+      voice: {
+        id: voiceId,
+        voiceId: voiceId,  // 兼容前端
+        audioUrl: audioUrl,
+        status: 'processing',
+        duration: 0
+      },
+      message: '音频上传成功，正在处理中'
     });
 
   } catch (error) {
