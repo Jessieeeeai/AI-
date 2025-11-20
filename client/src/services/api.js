@@ -48,16 +48,19 @@ export const authService = {
     api.get('/auth/profile'),
 };
 
-// 积分服务
-export const creditsService = {
-  getBalance: () => 
-    api.get('/credits/balance'),
+// 支付服务
+export const paymentService = {
+  createStripeCheckout: (packageId) =>
+    api.post('/payment/stripe/checkout', { packageId }),
   
-  getHistory: (limit = 20) => 
-    api.get(`/credits/history?limit=${limit}`),
+  verifyPayment: (sessionId) =>
+    api.get(`/payment/verify?sessionId=${sessionId}`),
   
-  recharge: (amount, paymentMethod) => 
-    api.post('/credits/recharge', { amount, paymentMethod }),
+  createCryptoPayment: (packageId) =>
+    api.post('/payment/crypto/create', { packageId }),
+  
+  getTransactions: (limit = 20, offset = 0) =>
+    api.get(`/payment/transactions?limit=${limit}&offset=${offset}`),
 };
 
 // 任务服务

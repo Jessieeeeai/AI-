@@ -10,6 +10,7 @@ import DashboardPage from './pages/DashboardPage';
 import RechargePage from './pages/RechargePage';
 import CreditsPage from './pages/CreditsPage';
 import AdminPage from './pages/AdminPage';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
 
 // 布局组件
 import Navbar from './components/Navbar';
@@ -39,6 +40,7 @@ function App() {
             <Route path="/recharge" element={<RechargePage />} />
             <Route path="/credits" element={<CreditsPage />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="/payment/success" element={<PaymentSuccessPage />} />
           </Routes>
         </div>
       </Router>

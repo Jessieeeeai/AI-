@@ -10,6 +10,7 @@ import './config/database.js';
 // 导入路由
 import authRoutes from './routes/auth.js';
 import taskRoutes from './routes/tasks.js';
+import paymentRoutes from './routes/payment.js';
 
 // 配置环境变量
 dotenv.config();
@@ -39,6 +40,7 @@ app.get('/health', (req, res) => {
 // API路由
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // 所有其他路由返回index.html（用于React Router）
 app.get('*', (req, res) => {
