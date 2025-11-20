@@ -12,6 +12,7 @@ import authRoutes from './routes/auth.js';
 import taskRoutes from './routes/tasks.js';
 import paymentRoutes from './routes/payment.js';
 import uploadRoutes from './routes/upload.js';
+import adminRoutes from './routes/admin.js';
 
 // 配置环境变量
 dotenv.config();
@@ -43,6 +44,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 所有其他路由返回index.html（用于React Router）
 app.get('*', (req, res) => {
