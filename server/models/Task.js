@@ -7,12 +7,18 @@ export class Task {
     const {
       userId,
       text,
+      originalText,
+      optimizedText,
       voiceId,
       voiceSettings,
+      voiceType,
       templateId,
       isCustomTemplate,
       duration,
       segments,
+      segmentData,
+      needsSegmentation,
+      segmentationStrategy,
       costBreakdown,
       totalCost
     } = taskData;
@@ -21,20 +27,26 @@ export class Task {
     
     await dbRun(
       `INSERT INTO tasks (
-        id, user_id, text, voice_id, voice_settings, 
-        template_id, is_custom_template, duration, segments,
+        id, user_id, text, original_text, optimized_text,
+        voice_id, voice_settings, 
+        template_id, is_custom_template, 
+        duration, segments, segment_data, segmentation_strategy,
         cost_breakdown, total_cost, status, progress
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         taskId,
         userId,
-        text,
+        text || optimizedText, // 向后兼容
+        originalText || '',
+        optimizedText || text,
         voiceId,
         JSON.stringify(voiceSettings),
         templateId,
         isCustomTemplate ? 1 : 0,
         duration,
-        segments,
+        segments || (needsSegmentation ? JSON.parse(segmentData || '[]').length : 1),
+        segmentData || null,
+        segmentationStrategy || 'auto',
         JSON.stringify(costBreakdown),
         totalCost,
         'pending',

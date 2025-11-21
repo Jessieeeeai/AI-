@@ -1,19 +1,44 @@
 import { Task } from '../models/Task.js';
 import { User } from '../models/User.js';
-import { dbRun } from '../config/database.js';
-import { queueVideoGeneration } from '../services/videoGenerationService.js';
+import { dbRun, dbGet } from '../config/database.js';
+import { addVideoGenerationJob } from '../queues/videoQueue.js';
+import { v4 as uuidv4 } from 'uuid';
 
 // 创建视频生成任务
 export const createTask = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { text, voiceSettings, voiceId, templateId, isCustomTemplate } = req.body;
+    const {
+      // 文案数据
+      text,
+      originalText,
+      optimizedText,
+      optimizationStyle,
+      
+      // 声音数据
+      voiceId,
+      voiceType,
+      systemVoiceId,
+      customVoiceId,
+      voiceSettings,
+      
+      // 模板数据
+      templateId,
+      isCustomTemplate,
+      
+      // 分段数据
+      needsSegmentation,
+      segmentationStrategy,
+      segmentationResult,
+      segments
+    } = req.body;
 
     // 验证输入
-    if (!text || text.length < 10 || text.length > 5000) {
+    const finalText = optimizedText || text;
+    if (!finalText || finalText.length < 10 || finalText.length > 10000) {
       return res.status(400).json({ 
         error: 'invalid_text', 
-        message: '文本长度必须在10-5000个字符之间' 
+        message: '文本长度必须在10-10000个字符之间' 
       });
     }
 
@@ -24,8 +49,33 @@ export const createTask = async (req, res) => {
       });
     }
 
-    // 计算成本
-    const costData = Task.calculateCost(text, voiceId, isCustomTemplate);
+    // 确定实际使用的voiceId
+    const actualVoiceId = voiceType === 'custom' ? customVoiceId : (systemVoiceId || voiceId);
+
+    // 计算成本（基于优化后的文本长度）
+    const textLength = finalText.length;
+    const segmentCount = needsSegmentation ? (segments?.length || 1) : 1;
+    
+    // 简单成本计算：1积分/秒，约3.5字/秒
+    const estimatedDuration = Math.ceil(textLength / 3.5);
+    const baseCost = estimatedDuration;
+    const customTemplateCost = isCustomTemplate ? 10 : 0;
+    const customVoiceCost = voiceType === 'custom' ? 5 : 0;
+    const segmentCost = segmentCount > 1 ? (segmentCount - 1) * 2 : 0; // 每多一段加2积分
+    
+    const totalCost = baseCost + customTemplateCost + customVoiceCost + segmentCost;
+    
+    const costData = {
+      total: totalCost,
+      duration: estimatedDuration,
+      segments: segmentCount,
+      breakdown: {
+        base: baseCost,
+        customTemplate: customTemplateCost,
+        customVoice: customVoiceCost,
+        segmentation: segmentCost
+      }
+    };
 
     // 检查用户积分余额
     const userCredits = await User.getCredits(userId);
@@ -54,16 +104,26 @@ export const createTask = async (req, res) => {
       [userId, 'deduction', -costData.total, costData.total * 0.1, 'completed']
     );
 
+    // 准备segmentData
+    const segmentData = needsSegmentation && segments ? 
+      JSON.stringify(segments) : null;
+
     // 创建任务
     const taskId = await Task.create({
       userId,
-      text,
-      voiceId,
+      text: finalText,
+      originalText: originalText || '',
+      optimizedText: finalText,
+      voiceId: actualVoiceId,
+      voiceType,
       voiceSettings,
       templateId,
       isCustomTemplate,
       duration: costData.duration,
       segments: costData.segments,
+      segmentData,
+      needsSegmentation: needsSegmentation || false,
+      segmentationStrategy: segmentationStrategy || 'auto',
       costBreakdown: costData,
       totalCost: costData.total
     });
@@ -73,7 +133,7 @@ export const createTask = async (req, res) => {
 
     // ✅ 将任务加入视频生成队列
     console.log(`📤 将任务 ${taskId} 加入生成队列...`);
-    queueVideoGeneration(taskId);
+    await addVideoGenerationJob(taskId, 'normal');
 
     res.status(201).json({
       success: true,
