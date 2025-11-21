@@ -28,40 +28,46 @@
 - JWT认证
 - Stripe支付
 
-### AI服务
-- IndexTTS2 (语音生成)
-- Wan2.1 + InfiniteTalk (视频生成)
+### AI服务（GPU加速）
+- **IndexTTS2** - 情感语音合成（支持8维情感向量）
+- **ComfyUI + MuseTalk** - AI数字人视频生成
+- **FFmpeg** - 视频分段与合并
+- **Bull + Redis** - 异步任务队列
 
 ## 快速开始
 
-### 1. 安装依赖
+### 方式一：本地开发（Mock模式）
+
+适合前端开发和测试，AI服务使用模拟数据：
 
 ```bash
+# 1. 安装依赖
 npm install
-```
 
-### 2. 配置环境变量
-
-复制 `.env.example` 到 `.env` 并填写配置：
-
-```bash
+# 2. 配置环境变量
 cp .env.example .env
-```
 
-### 3. 初始化数据库
-
-```bash
+# 3. 初始化数据库
 npm run db:init
-```
 
-### 4. 启动开发服务器
-
-```bash
+# 4. 启动开发服务器
 npm run dev
 ```
 
-前端: http://localhost:5173
+前端: http://localhost:5173  
 后端: http://localhost:3001
+
+### 方式二：RunPod GPU生产环境（推荐）
+
+完整的AI视频生成能力，参见 **[RunPod部署教程](RunPod部署教程.md)**
+
+```bash
+# 在RunPod GPU服务器上一键部署
+bash deploy_runpod.sh  # 部署主应用
+bash deploy_ai_services.sh  # 部署AI服务
+```
+
+
 
 ## 项目结构
 
@@ -93,56 +99,66 @@ videoai-pro/
 **一键部署到RunPod GPU服务器**：
 
 ```bash
-# 1. 推送代码到GitHub
-./push_to_github.sh
-
-# 2. 在RunPod创建GPU Pod（RTX 3090, 24GB）
+# 1. 在RunPod创建GPU实例（RTX 3090, 24GB）
 # 访问: https://www.runpod.io/
 
-# 3. 在RunPod中一键部署
+# 2. SSH连接到RunPod服务器后，执行：
 cd /workspace
-git clone <你的仓库地址>
-cd videoai-webapp
-./deploy_runpod.sh
+git clone https://github.com/你的用户名/videoai-pro.git
+cd videoai-pro
+
+# 3. 一键部署 VideoAI Pro（5分钟）
+chmod +x deploy_runpod.sh
+bash deploy_runpod.sh
+
+# 4. 部署AI服务（30-60分钟）
+bash deploy_ai_services.sh
 ```
 
-**详细文档**：
-- 📖 [5分钟快速部署](RUNPOD_QUICKSTART.md)
-- 📋 [完整部署指南](RUNPOD_DEPLOYMENT.md)
-- 💰 [费用详解](RUNPOD_PRICING.md)
-- ✅ [部署检查清单](DEPLOYMENT_CHECKLIST.md)
-- 🔧 [故障排除](TROUBLESHOOTING.md)
+**📚 详细文档**：
+- 🚀 **[快速开始](RUNPOD_START.md)** - 3步完成部署（最简洁）
+- 📖 **[完整教程](RunPod部署教程.md)** - 图文详解，含故障排查
+- ⚡ **[命令速查表](RunPod快速命令.md)** - 常用命令一键复制
+- 📊 **[部署流程图](DEPLOYMENT_FLOW.md)** - 可视化架构和流程
+- 🔧 **[GPU方案详解](GPU完整方案.md)** - 技术架构说明
 
-**费用参考**：
-- RTX 3090: $0.34/小时 (约2.4元/小时)
-- 每天8小时: 约19元/天
-- 每月: 约580元/月
+**💰 费用参考**：
+| 使用场景 | GPU型号 | 月成本 |
+|----------|---------|--------|
+| 开发测试 | RTX 3090 | ~$50 (按小时) |
+| 小规模生产 | RTX 3090 | ~$80 (8小时/天) |
+| 24/7运行 | RTX 3090 | ~$245/月 |
+
+**✨ 支持的GPU**：
+- RTX 3090 (24GB) - **推荐** 性价比最高
+- RTX 4090 (24GB) - 性能最强
+- A5000 (24GB) - 企业级稳定
 
 ---
 
-### 前端部署 (Vercel)
+### 其他部署方式
+
+#### 前端独立部署 (Vercel/Netlify)
 
 ```bash
+cd client
 npm run build
-# 将 dist/ 目录部署到 Vercel
+# 将 dist/ 目录部署到静态托管服务
 ```
 
-### 后端部署 (阿里云ECS)
+#### 后端独立部署 (VPS/云服务器)
 
 ```bash
-# 1. 安装依赖
+# 安装依赖
 npm install --production
 
-# 2. 配置环境变量
-nano .env
-
-# 3. 使用PM2启动
+# 启动服务
 pm2 start server/index.js --name videoai-pro
-
-# 4. 配置开机自启
 pm2 startup
 pm2 save
 ```
+
+**注意**：独立部署需要自行配置GPU服务器用于AI服务
 
 ## API文档
 
