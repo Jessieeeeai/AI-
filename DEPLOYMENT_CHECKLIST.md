@@ -1,340 +1,440 @@
-# ✅ RunPod 部署检查清单
+# ✅ RunPod部署检查清单
 
-## 🎯 部署前准备
-
-### 账号和充值
-- [ ] RunPod账号已注册
-- [ ] 账号已实名（如需要）
-- [ ] 已充值至少 $20
-- [ ] 已设置余额预警（建议$10）
-
-### 代码准备
-- [ ] 代码已在本地测试通过
-- [ ] 已创建GitHub仓库
-- [ ] 代码已推送到GitHub
-- [ ] `.env.example` 已配置正确
-- [ ] `deploy_runpod.sh` 脚本已准备好
-
-### 文档检查
-- [ ] 已阅读 `RUNPOD_QUICKSTART.md`
-- [ ] 已阅读 `RUNPOD_DEPLOYMENT.md`
-- [ ] 已了解费用（参考 `RUNPOD_PRICING.md`）
-- [ ] 已准备好测试账号信息
+使用此清单确保部署的每一步都正确完成。
 
 ---
 
-## 🚀 RunPod配置
+## 📋 部署前检查
 
-### GPU Pod创建
-- [ ] GPU类型：RTX 3090 或 RTX 4090
-- [ ] 显存：≥ 24GB
-- [ ] 模板：runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel
-- [ ] Container Disk：50GB
-- [ ] Volume Disk：100GB
-- [ ] 已勾选 "Persistent Volume"
-- [ ] 暴露端口：3001, 5000, 8188
-- [ ] 实例类型：On-Demand（稳定）或 Spot（便宜）
+### ☑️ 本地准备
 
-### Pod启动验证
-- [ ] Pod状态显示 "Running"
-- [ ] 可以打开 Web Terminal
-- [ ] 或可以通过SSH连接
-- [ ] `nvidia-smi` 显示GPU信息正常
+- [ ] 代码已提交到Git：`git status` 无未提交更改
+- [ ] 代码已推送到GitHub：`git push origin main`
+- [ ] 记录仓库地址：`https://github.com/你的用户名/videoai-pro.git`
+- [ ] 本地测试通过：`npm run dev` 可正常访问
 
----
+### ☑️ RunPod账号准备
 
-## 💻 部署执行
+- [ ] 已注册RunPod账号：https://www.runpod.io/
+- [ ] 已完成邮箱验证
+- [ ] 账户已充值：至少 **$20**（建议 $50）
+- [ ] 了解计费方式：按小时计费
 
-### 环境配置
-- [ ] 已连接到Pod（Web Terminal或SSH）
-- [ ] 当前目录在 `/workspace`
-- [ ] 网络连接正常（可以访问GitHub）
+### ☑️ 技术准备
 
-### 代码部署
-- [ ] 成功克隆Git仓库
-- [ ] `deploy_runpod.sh` 脚本有执行权限
-- [ ] 执行部署脚本
-- [ ] 脚本运行无错误
-- [ ] Node.js已安装（v18+）
-- [ ] Python3已安装
-- [ ] PM2已安装
-- [ ] 所有npm依赖已安装
-- [ ] 前端已构建（client/dist存在）
-
-### 模型下载
-- [ ] `/workspace/models` 目录已创建
-- [ ] Wav2Vec模型已下载
-- [ ] （可选）IndexTTS2模型已下载
-- [ ] （可选）Wan2.1视频模型已下载
-
-### 数据库初始化
-- [ ] `database/videoai.db` 文件已创建
-- [ ] 数据库表已创建
-- [ ] 测试账号已创建
-- [ ] VIP账号（1000积分）存在
-
-### 环境变量
-- [ ] `.env` 文件已创建
-- [ ] `NODE_ENV=production`
-- [ ] `PORT=3001`
-- [ ] 数据库路径配置正确
-- [ ] 上传目录配置正确
-- [ ] JWT_SECRET已设置
+- [ ] 了解基本的Linux命令
+- [ ] 会使用SSH连接服务器
+- [ ] 理解GPU显存和VRAM概念
+- [ ] 知道如何使用`pm2`查看日志
 
 ---
 
-## 🔄 服务启动
+## 🚀 部署步骤检查
 
-### PM2服务
-- [ ] `pm2 start ecosystem.config.cjs` 执行成功
-- [ ] `pm2 status` 显示所有服务
-- [ ] videoai-backend 状态为 "online"
-- [ ] mock-indextts2 状态为 "online"
-- [ ] mock-comfyui 状态为 "online"
-- [ ] 无服务显示 "errored" 或 "stopped"
+### 第1步：创建RunPod实例
 
-### 日志检查
-- [ ] `pm2 logs` 无严重错误
-- [ ] backend日志显示 "Server running on port 3001"
-- [ ] TTS服务日志显示启动成功
-- [ ] ComfyUI服务日志显示启动成功
+- [ ] 登录RunPod控制台
+- [ ] 点击"Deploy"创建新实例
+- [ ] 选择GPU：**RTX 3090 (24GB)** ✅ 推荐
+- [ ] 配置Container Disk：**100 GB** 或更大
+- [ ] 暴露端口：**80** (HTTP)
+- [ ] 点击"Deploy"并等待启动（约1-2分钟）
+- [ ] 记录实例信息：
+  ```
+  Pod ID: _______________
+  SSH地址: _______________
+  HTTP地址: _______________
+  密码: _______________
+  ```
 
-### 端口检查
-- [ ] `curl http://localhost:3001/health` 返回200
-- [ ] `curl http://localhost:5000/health` 返回200
-- [ ] `curl http://localhost:8188/health` 返回200
+### 第2步：连接到服务器
 
-### GPU检查
-- [ ] `nvidia-smi` 显示GPU被使用
-- [ ] GPU内存占用正常（不超过23GB）
-- [ ] GPU温度正常（< 80°C）
+#### 方法A：SSH连接（推荐）
+- [ ] 打开终端（Windows: PowerShell, Mac/Linux: Terminal）
+- [ ] 执行：`ssh root@<RunPod-IP> -p <端口>`
+- [ ] 输入密码并成功连接
+- [ ] 看到欢迎信息和命令提示符
+
+#### 方法B：Web Terminal
+- [ ] 在RunPod控制台点击"Connect"
+- [ ] 选择"Start Web Terminal"
+- [ ] 在浏览器中成功打开终端
+
+### 第3步：检查环境
+
+```bash
+# 检查GPU
+- [ ] nvidia-smi  # 应显示GPU信息
+      GPU: RTX 3090 24GB ✅
+      CUDA Version: 11.x 或 12.x ✅
+
+# 检查工作目录
+- [ ] cd /workspace && pwd  # 应显示 /workspace
+      或 cd ~ && pwd  # 显示 /root
+
+# 检查网络
+- [ ] ping -c 3 google.com  # 应有响应
+```
+
+### 第4步：克隆项目代码
+
+```bash
+cd /workspace  # 或 cd ~
+
+# 克隆仓库
+- [ ] git clone https://github.com/你的用户名/videoai-pro.git
+      Cloning into 'videoai-pro'... ✅
+      
+- [ ] cd videoai-pro && ls -la
+      看到文件：deploy_runpod.sh, package.json 等 ✅
+```
+
+### 第5步：部署VideoAI Pro主应用
+
+```bash
+# 给脚本执行权限
+- [ ] chmod +x deploy_runpod.sh
+
+# 运行部署脚本
+- [ ] bash deploy_runpod.sh
+      
+      等待过程中应看到：
+      - [ ] ✅ 更新系统
+      - [ ] ✅ 安装Node.js 20
+      - [ ] ✅ 安装Redis
+      - [ ] ✅ 安装FFmpeg
+      - [ ] ✅ 安装PM2
+      - [ ] ✅ 克隆项目（或跳过）
+      - [ ] ✅ 安装依赖
+      - [ ] ✅ 构建前端
+      - [ ] ✅ 配置Nginx
+      - [ ] ✅ 启动服务
+      
+      预计时间：5-10分钟 ⏱️
+
+# 验证部署成功
+- [ ] 看到成功消息：
+      ```
+      ================================================
+      ✅ VideoAI Pro 部署完成！
+      ================================================
+      ```
+```
+
+### 第6步：验证主应用服务
+
+```bash
+# 检查PM2服务状态
+- [ ] pm2 status
+      应该看到：
+      ┌─────┬────────┬─────────┐
+      │ id  │ name   │ status  │
+      ├─────┼────────┼─────────┤
+      │ 0   │ videoai│ online  │✅
+      └─────┴────────┴─────────┘
+
+# 检查Nginx状态
+- [ ] systemctl status nginx
+      Active: active (running) ✅
+
+# 检查Redis
+- [ ] redis-cli ping
+      PONG ✅
+
+# 测试后端API
+- [ ] curl http://localhost:3001/api/health
+      应返回：{"status":"healthy"} ✅
+```
+
+### 第7步：访问网站前端
+
+```bash
+# 获取公网IP
+- [ ] curl ifconfig.me
+      记录IP: _______________
+
+# 在浏览器访问
+- [ ] 打开浏览器，访问：
+      http://<你的RunPod-IP>
+      或
+      https://<xxxxx>-80.proxy.runpod.net
+      
+      应该看到：
+      - [ ] VideoAI Pro 登录/注册页面 ✅
+      - [ ] 页面样式正常加载 ✅
+      - [ ] 无明显错误提示 ✅
+```
+
+### 第8步：部署AI服务（IndexTTS2 + ComfyUI）
+
+```bash
+cd /workspace/videoai-pro
+
+# 给脚本执行权限
+- [ ] chmod +x deploy_ai_services.sh
+
+# 运行AI服务部署
+- [ ] bash deploy_ai_services.sh
+      
+      预计时间：30-60分钟 ⏱️
+      
+      过程中应看到：
+      - [ ] ✅ 克隆IndexTTS2
+      - [ ] ✅ 创建Python虚拟环境
+      - [ ] ✅ 安装依赖包
+      - [ ] ✅ 下载模型文件（较慢）
+      - [ ] ✅ 启动TTS服务
+      - [ ] ✅ 克隆ComfyUI
+      - [ ] ✅ 安装MuseTalk
+      - [ ] ✅ 启动视频生成服务
+      
+# ⚠️ 注意：模型下载可能很慢
+      - 如果下载失败，可以手动下载后上传
+      - 或使用国内镜像
+```
+
+### 第9步：验证AI服务
+
+```bash
+# 检查所有PM2服务
+- [ ] pm2 status
+      应该看到3个服务都在运行：
+      ┌─────┬────────────┬─────────┐
+      │ id  │ name       │ status  │
+      ├─────┼────────────┼─────────┤
+      │ 0   │ videoai    │ online  │✅
+      │ 1   │ indextts2  │ online  │✅
+      │ 2   │ comfyui    │ online  │✅
+      └─────┴────────────┴─────────┘
+
+# 测试IndexTTS2
+- [ ] curl http://localhost:9880/health
+      应返回：{"status":"healthy"} ✅
+
+# 测试ComfyUI
+- [ ] curl http://localhost:8188/system_stats
+      应返回GPU信息 ✅
+
+# 检查GPU使用
+- [ ] nvidia-smi
+      应看到IndexTTS2和ComfyUI进程 ✅
+```
+
+### 第10步：端到端测试
+
+```bash
+# 在网站上测试完整流程
+- [ ] 注册新账号
+      用户名：testuser
+      邮箱：test@example.com
+      密码：Test123456
+      
+- [ ] 登录成功 ✅
+
+- [ ] 点击"创建视频"
+      
+- [ ] Step 1: 输入文本
+      文本："大家好，欢迎来到VideoAI Pro！"
+      点击"优化文本" ✅
+      
+- [ ] Step 2: 音频预览
+      选择声音："磁性男声"
+      点击"试听" ✅
+      能听到声音 ✅
+      
+- [ ] Step 3: 选择模板
+      选择任意模板 ✅
+      
+- [ ] Step 4: 确认配置
+      查看费用估算 ✅
+      点击"开始生成" ✅
+      
+- [ ] 进入"我的任务"
+      看到任务状态："处理中" ✅
+      
+- [ ] 等待2-5分钟
+      任务状态变为："已完成" ✅
+      
+- [ ] 点击播放视频
+      视频正常播放 ✅
+      声音和画面同步 ✅
+```
 
 ---
 
-## 🌐 网络访问
+## ✅ 部署后配置
 
-### RunPod URL
-- [ ] 在RunPod控制台找到公网地址
-- [ ] 格式类似：`https://xxx-3001.proxy.runpod.net`
-- [ ] 复制URL
+### 安全设置
 
-### 网站访问
-- [ ] 在浏览器打开公网地址
-- [ ] 网站首页正常显示
-- [ ] 无404或500错误
-- [ ] 静态资源加载正常（图片、CSS、JS）
+- [ ] 修改root密码：`passwd`
+- [ ] 配置SSH密钥登录（可选）
+- [ ] 设置防火墙规则（可选）
 
-### 功能测试
-- [ ] 注册功能正常
-- [ ] 登录功能正常
-- [ ] 可以使用测试账号登录
-- [ ] VIP账号显示1000积分
-- [ ] 上传声音文件成功
-- [ ] 声音预览功能正常
-- [ ] 上传模板文件成功
-- [ ] 模板显示正常
+### 性能优化
 
----
+- [ ] 查看GPU使用率是否正常
+- [ ] 查看内存使用情况：`free -h`
+- [ ] 查看磁盘空间：`df -h`
+- [ ] 设置定时任务（可选）：`crontab -e`
 
-## 🧪 完整功能测试
+### 备份配置
 
-### 步骤1：输入文本
-- [ ] 可以输入文本
-- [ ] 文本保存正常
-- [ ] 下一步按钮可用
+- [ ] 备份数据库：
+      ```bash
+      mkdir -p /workspace/backups
+      cp /workspace/videoai-pro/data/database.sqlite \
+         /workspace/backups/db_$(date +%Y%m%d).sqlite
+      ```
 
-### 步骤2：声音设置
-- [ ] 系统声音预览正常
-- [ ] 可以上传声音文件（WAV/MP3/M4A）
-- [ ] 上传后显示声音信息
-- [ ] 声音克隆预览功能正常（调用TTS）
-- [ ] 情绪滑块调整正常
-- [ ] 语速、音调、音量调整正常
-
-### 步骤3：模板选择
-- [ ] 系统模板显示正常
-- [ ] 自定义模板显示正常
-- [ ] 可以上传新模板
-- [ ] 模板预览正常
-
-### 步骤4：生成视频
-- [ ] 点击生成按钮
-- [ ] 显示生成中状态
-- [ ] 进度条更新
-- [ ] 积分正确扣除
-- [ ] （Mock模式）显示测试视频
-- [ ] 可以下载生成的视频
-- [ ] 历史记录中显示
-
-### 历史记录
-- [ ] 历史页面显示所有生成记录
-- [ ] 可以查看详情
-- [ ] 可以重新生成
-- [ ] 可以删除记录
-
----
-
-## 🔐 安全检查
-
-### 认证和授权
-- [ ] 未登录无法访问创建页面
-- [ ] JWT token正常工作
-- [ ] 登出功能正常
-- [ ] 密码不会明文显示
-
-### 文件上传
-- [ ] 文件大小限制生效
-- [ ] 文件类型验证生效
-- [ ] 上传的文件保存在正确位置
-- [ ] 文件URL可以访问
-
-### 数据隔离
-- [ ] 用户只能看到自己的声音
-- [ ] 用户只能看到自己的模板
-- [ ] 用户只能看到自己的历史
-
----
-
-## 📊 性能监控
-
-### 资源使用
-- [ ] CPU使用率正常（< 80%）
-- [ ] 内存使用正常（< 90%）
-- [ ] GPU使用正常（< 95%）
-- [ ] 磁盘空间充足（> 10GB剩余）
-
-### 响应时间
-- [ ] 页面加载 < 3秒
-- [ ] API响应 < 2秒
-- [ ] 文件上传 < 10秒
-- [ ] （Mock）视频生成 < 30秒
-
-### 日志轮转
-- [ ] 日志文件大小合理（< 100MB）
-- [ ] 旧日志自动清理
-- [ ] PM2日志轮转已配置
-
----
-
-## 💾 数据备份
-
-### 数据库备份
-- [ ] 手动备份数据库
-- [ ] 备份文件保存在安全位置
-- [ ] 测试恢复备份
-
-### 文件备份
-- [ ] 上传的声音文件已备份
-- [ ] 上传的模板文件已备份
-- [ ] 生成的视频已备份（可选）
-
-### 备份策略
-- [ ] 设置定时备份（cron）
-- [ ] 备份保留策略（如保留30天）
-
----
-
-## 🔧 维护配置
-
-### PM2持久化
-- [ ] `pm2 save` 已执行
-- [ ] `pm2 startup` 已配置
-- [ ] 重启后服务自动启动
+- [ ] 备份环境配置：
+      ```bash
+      cp /workspace/videoai-pro/.env \
+         /workspace/backups/.env.backup
+      ```
 
 ### 监控设置
-- [ ] PM2 monit可以查看实时状态
-- [ ] 日志可以正常查看
-- [ ] 错误日志单独记录
 
-### 更新流程
-- [ ] 知道如何 git pull 更新代码
-- [ ] 知道如何重启服务
-- [ ] 知道如何查看日志排查问题
+- [ ] 配置PM2日志：`pm2 logs --lines 100`
+- [ ] 设置GPU监控：`watch -n 2 nvidia-smi`
+- [ ] 配置磁盘空间告警（可选）
 
 ---
 
-## 📞 故障处理
+## 🐛 问题排查检查点
 
-### 常见问题解决方案
-- [ ] 服务启动失败 → 查看 `pm2 logs --err`
-- [ ] 端口占用 → `pm2 delete all && pm2 start`
-- [ ] 数据库错误 → 重新初始化
-- [ ] GPU内存不足 → 重启服务释放
-- [ ] 网站无法访问 → 检查端口配置
+### 如果服务无法启动
 
-### 联系支持
-- [ ] RunPod支持：support@runpod.io
-- [ ] Discord社区：https://discord.gg/runpod
-- [ ] 文档：https://docs.runpod.io/
+- [ ] 查看PM2日志：`pm2 logs <service-name>`
+- [ ] 检查端口占用：`netstat -tlnp`
+- [ ] 检查磁盘空间：`df -h`
+- [ ] 重启服务：`pm2 restart all`
 
----
+### 如果无法访问网站
 
-## 🎉 部署完成确认
+- [ ] 检查Nginx：`systemctl status nginx`
+- [ ] 测试Nginx配置：`nginx -t`
+- [ ] 检查防火墙：`ufw status`
+- [ ] 重启Nginx：`systemctl restart nginx`
 
-### 最终检查
-- [ ] 所有上述检查项已完成
-- [ ] 网站可以正常访问
-- [ ] 测试账号可以登录
-- [ ] 核心功能正常工作
-- [ ] 无严重错误日志
-- [ ] 性能指标正常
-- [ ] 已设置监控和备份
+### 如果TTS生成失败
 
-### 文档保存
-- [ ] 记录RunPod URL
-- [ ] 记录测试账号信息
-- [ ] 记录重要配置
-- [ ] 保存部署日期和版本
+- [ ] 查看IndexTTS2日志：`pm2 logs indextts2`
+- [ ] 检查模型文件：`ls -lh /workspace/IndexTTS2/checkpoints/`
+- [ ] 测试TTS API：`curl http://localhost:9880/health`
+- [ ] 重启TTS服务：`pm2 restart indextts2`
 
-### 交接准备（如需要）
-- [ ] 准备操作手册
-- [ ] 准备维护文档
-- [ ] 准备故障处理指南
+### 如果视频生成失败
+
+- [ ] 查看ComfyUI日志：`pm2 logs comfyui`
+- [ ] 检查GPU内存：`nvidia-smi`
+- [ ] 检查模型文件：`ls -lh /workspace/ComfyUI/models/`
+- [ ] 重启视频服务：`pm2 restart comfyui`
 
 ---
 
-## 📈 下一步
+## 📝 记录信息
 
-### 优化方向
-- [ ] 从Mock切换到真实TTS模型
-- [ ] 从Mock切换到真实ComfyUI
-- [ ] 配置Nginx反向代理
-- [ ] 绑定自定义域名
-- [ ] 配置SSL证书
-- [ ] 设置CDN加速
-- [ ] 优化数据库查询
-- [ ] 添加Redis缓存
+### 服务器信息
 
-### 功能扩展
-- [ ] 添加用户充值功能
-- [ ] 添加更多声音模板
-- [ ] 添加更多视频模板
-- [ ] 添加批量生成功能
-- [ ] 添加视频编辑功能
-- [ ] 添加社交分享功能
+```
+RunPod实例ID: _______________
+GPU型号: _______________
+公网IP: _______________
+SSH端口: _______________
+创建时间: _______________
+```
 
-### 商业化准备
-- [ ] 接入支付系统
-- [ ] 添加订阅套餐
-- [ ] 添加API接口
-- [ ] 添加使用统计
-- [ ] 添加邀请奖励
-- [ ] 准备用户协议和隐私政策
+### 服务端口
+
+```
+前端: http://IP:80
+后端API: http://localhost:3001
+IndexTTS2: http://localhost:9880
+ComfyUI: http://localhost:8188
+Redis: localhost:6379
+```
+
+### 账号信息
+
+```
+Root密码: _______________
+测试账号: _______________
+测试密码: _______________
+```
+
+### 重要路径
+
+```
+项目目录: /workspace/videoai-pro
+数据库: /workspace/videoai-pro/data/database.sqlite
+上传目录: /workspace/videoai-pro/public/uploads
+生成目录: /workspace/videoai-pro/public/generated
+TTS目录: /workspace/IndexTTS2
+ComfyUI目录: /workspace/ComfyUI
+```
 
 ---
 
-**祝您部署顺利！** 🚀
+## 🎉 部署完成标志
 
-如有任何问题，请参考 `RUNPOD_DEPLOYMENT.md` 或联系技术支持。
+当你完成以下所有检查项，部署就算成功了：
+
+- ✅ 所有PM2服务状态为 `online`
+- ✅ Nginx服务正常运行
+- ✅ Redis可以正常连接
+- ✅ 前端页面可以访问
+- ✅ 可以注册和登录
+- ✅ 可以试听声音
+- ✅ 可以生成视频
+- ✅ 视频可以正常播放
 
 ---
 
-**部署日期**: _____________
+## 📚 有用的命令
 
-**部署人员**: _____________
+```bash
+# 查看所有服务
+pm2 status
 
-**RunPod URL**: _____________
+# 查看日志
+pm2 logs
 
-**版本号**: _____________
+# 重启所有服务
+pm2 restart all
 
-**备注**: _____________
+# 查看GPU
+nvidia-smi
+
+# 查看磁盘
+df -h
+
+# 查看内存
+free -h
+
+# 测试网络
+ping google.com
+
+# 查看进程
+htop
+```
+
+---
+
+## 💡 下一步
+
+部署完成后，你可以：
+
+1. 🎨 **自定义模板** - 添加更多视频模板
+2. 🎤 **上传声音** - 克隆自己的声音
+3. 📊 **查看统计** - 分析使用数据
+4. 🔧 **优化配置** - 调整生成参数
+5. 💰 **成本优化** - 实施省钱策略
+
+---
+
+**祝你部署顺利！🚀**
+
+如有问题，参考：
+- `RunPod部署教程.md` - 详细教程
+- `RunPod快速命令.md` - 命令速查
+- `DEPLOYMENT_FLOW.md` - 架构图
