@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { dbRun, dbGet, dbAll } from '../config/database.js';
+import voiceCloneService from '../services/voiceCloneService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -123,9 +124,15 @@ export const uploadVoice = async (req, res) => {
       [voiceId, userId, audioUrl, 0, 'processing']
     );
 
-    // TODO: 触发声音克隆处理任务
-    // 这里应该将任务加入队列，由后台服务处理
-    // await queueVoiceCloning(voiceId, file.path);
+    // 触发声音克隆处理任务（异步处理）
+    // 不阻塞响应，立即返回给用户
+    voiceCloneService.processUserVoice(voiceId, userId)
+      .then(() => {
+        console.log(`✅ 声音克隆完成: ${voiceId}`);
+      })
+      .catch((error) => {
+        console.error(`❌ 声音克隆失败: ${voiceId}`, error.message);
+      });
 
     res.json({
       success: true,
