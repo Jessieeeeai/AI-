@@ -39,6 +39,13 @@ import('./mockComfyUI.js').then(() => {
   console.error('❌ ComfyUI Mock服务启动失败:', err);
 });
 
+// 启动文本优化 Mock服务
+import('./mockTextOptimization.js').then(() => {
+  console.log('✅ 文本优化 Mock服务已启动\n');
+}).catch(err => {
+  console.error('❌ 文本优化 Mock服务启动失败:', err);
+});
+
 // 捕获退出信号
 process.on('SIGINT', () => {
   console.log('\n\n🛑 正在关闭Mock服务...');

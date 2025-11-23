@@ -16,6 +16,7 @@ import adminRoutes from './routes/admin.js';
 import previewRoutes from './routes/preview.js';
 import optimizeRoutes from './routes/optimize.js';
 import segmentationRoutes from './routes/segmentation.js';
+import textOptimizationRoutes from './routes/textOptimization.js';
 
 // 配置环境变量
 dotenv.config();
@@ -51,6 +52,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/preview', previewRoutes);
 app.use('/api/optimize', optimizeRoutes);
 app.use('/api/segmentation', segmentationRoutes);
+app.use('/api/text-optimization', textOptimizationRoutes);
 
 // 所有其他路由返回index.html（用于React Router）
 app.get('*', (req, res) => {

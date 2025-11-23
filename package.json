@@ -13,9 +13,11 @@
     "build": "vite build",
     "start": "node server/index.js",
     "preview": "vite preview",
-    "test": "echo \"Running tests...\" && exit 0",
-    "test:unit": "echo \"Running unit tests...\" && exit 0",
-    "test:integration": "echo \"Running integration tests...\" && exit 0"
+    "test": "npm run test:mock && npm run test:video && npm run test:text",
+    "test:mock": "node tests/test-mock-services.js",
+    "test:video": "node tests/test-video-generation.js",
+    "test:text": "node tests/test-text-optimization.js",
+    "test:all": "npm run test:mock && npm run test:video && npm run test:text"
   },
   "keywords": [
     "video-generation",
