@@ -17,6 +17,9 @@ import previewRoutes from './routes/preview.js';
 import optimizeRoutes from './routes/optimize.js';
 import segmentationRoutes from './routes/segmentation.js';
 import textOptimizationRoutes from './routes/textOptimization.js';
+import projectsRoutes from './routes/projects.js';
+import draftsRoutes from './routes/drafts.js';
+import templatesRoutes from './routes/templates.js';
 
 // 配置环境变量
 dotenv.config();
@@ -53,6 +56,9 @@ app.use('/api/preview', previewRoutes);
 app.use('/api/optimize', optimizeRoutes);
 app.use('/api/segmentation', segmentationRoutes);
 app.use('/api/text-optimization', textOptimizationRoutes);
+app.use('/api/projects', projectsRoutes);
+app.use('/api/drafts', draftsRoutes);
+app.use('/api/templates', templatesRoutes);
 
 // 所有其他路由返回index.html（用于React Router）
 app.get('*', (req, res) => {
