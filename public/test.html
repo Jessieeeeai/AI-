@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VideoAI Pro - API测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>🎬 VideoAI Pro - API测试页面</h1>
+    
+    <div class="test-section">
+        <h2>1. 健康检查</h2>
+        <button onclick="testHealth()">测试后端健康</button>
+        <div id="health-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Mock服务检查</h2>
+        <button onclick="testMockServices()">测试Mock服务</button>
+        <div id="mock-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. 用户注册</h2>
+        <input type="text" id="username" placeholder="用户名" value="testuser">
+        <input type="email" id="email" placeholder="邮箱" value="test@example.com">
+        <input type="password" id="password" placeholder="密码" value="Test123456">
+        <button onclick="testRegister()">注册测试账户</button>
+        <div id="register-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. 文本优化 (需登录)</h2>
+        <textarea id="optimize-text" rows="4" style="width:100%">测试文本。。需要优化，，还有问题</textarea>
+        <button onclick="testOptimize()">优化文本</button>
+        <div id="optimize-result" class="result"></div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+
+        async function testHealth() {
+            const result = document.getElementById('health-result');
+            try {
+                const response = await fetch('/api/auth/profile');
+                const data = await response.json();
+                result.innerHTML = '<span class="success">✅ 后端正常</span>\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                result.innerHTML = '<span class="error">❌ 错误:</span> ' + error.message;
+            }
+        }
+
+        async function testMockServices() {
+            const result = document.getElementById('mock-result');
+            const services = [
+                { name: 'IndexTTS2', url: 'http://localhost:5000/health' },
+                { name: '文本优化', url: '/api/text-optimization/health' },
+                { name: 'ComfyUI', url: 'http://localhost:8188/system_stats' }
+            ];
+
+            let output = '';
+            for (const service of services) {
+                try {
+                    const response = await fetch(service.url);
+                    const data = await response.json();
+                    output += `<span class="success">✅ ${service.name}</span>\n${JSON.stringify(data, null, 2)}\n\n`;
+                } catch (error) {
+                    output += `<span class="error">❌ ${service.name}: ${error.message}</span>\n\n`;
+                }
+            }
+            result.innerHTML = output;
+        }
+
+        async function testRegister() {
+            const result = document.getElementById('register-result');
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                const data = await response.json();
+                
+                if (data.token) {
+                    token = data.token;
+                    localStorage.setItem('token', token);
+                    result.innerHTML = '<span class="success">✅ 注册成功！已保存token</span>\n' + JSON.stringify(data, null, 2);
+                } else {
+                    result.innerHTML = '<span class="error">❌ 注册失败</span>\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                result.innerHTML = '<span class="error">❌ 错误:</span> ' + error.message;
+            }
+        }
+
+        async function testOptimize() {
+            const result = document.getElementById('optimize-result');
+            const text = document.getElementById('optimize-text').value;
+
+            if (!token) {
+                result.innerHTML = '<span class="error">❌ 请先注册/登录获取token</span>';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/text-optimization/optimize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        tone: 'professional',
+                        style: 'clear'
+                    })
+                });
+                const data = await response.json();
+                result.innerHTML = '<span class="success">✅ 优化完成</span>\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                result.innerHTML = '<span class="error">❌ 错误:</span> ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
