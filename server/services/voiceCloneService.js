@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dbRun, dbGet } from '../config/database.js';
+import { aiServicesConfig } from '../config/aiServices.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,11 +12,16 @@ const __dirname = path.dirname(__filename);
 /**
  * 声音克隆服务
  * 负责与 IndexTTS2 服务通信，处理声音克隆任务
+ * 支持Mock模式（CPU）和Real模式（GPU）
  */
 class VoiceCloneService {
   constructor() {
-    this.indextts2Url = process.env.INDEXTTS2_API_URL || 'http://localhost:5000';
+    this.indextts2Url = aiServicesConfig.indexTTS2.apiUrl;
+    this.timeout = aiServicesConfig.indexTTS2.timeout;
+    this.useMock = aiServicesConfig.useMock;
     this.maxRetries = 3;
+    
+    console.log(`🎤 VoiceCloneService初始化 | 模式: ${this.useMock ? 'Mock (CPU)' : 'Real (GPU)'}`);
   }
 
   /**

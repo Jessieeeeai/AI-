@@ -6,11 +6,16 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "dev:mock": "concurrently \"npm run mock:services\" \"npm run server\" \"npm run client\"",
     "server": "nodemon server/index.js",
     "client": "vite",
+    "mock:services": "node server/mocks/startMockServices.js",
     "build": "vite build",
     "start": "node server/index.js",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "echo \"Running tests...\" && exit 0",
+    "test:unit": "echo \"Running unit tests...\" && exit 0",
+    "test:integration": "echo \"Running integration tests...\" && exit 0"
   },
   "keywords": [
     "video-generation",

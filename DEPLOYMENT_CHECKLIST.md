@@ -1,440 +1,442 @@
-# ✅ RunPod部署检查清单
+# VideoAI Pro - 部署前检查清单
 
-使用此清单确保部署的每一步都正确完成。
-
----
-
-## 📋 部署前检查
-
-### ☑️ 本地准备
-
-- [ ] 代码已提交到Git：`git status` 无未提交更改
-- [ ] 代码已推送到GitHub：`git push origin main`
-- [ ] 记录仓库地址：`https://github.com/你的用户名/videoai-pro.git`
-- [ ] 本地测试通过：`npm run dev` 可正常访问
-
-### ☑️ RunPod账号准备
-
-- [ ] 已注册RunPod账号：https://www.runpod.io/
-- [ ] 已完成邮箱验证
-- [ ] 账户已充值：至少 **$20**（建议 $50）
-- [ ] 了解计费方式：按小时计费
-
-### ☑️ 技术准备
-
-- [ ] 了解基本的Linux命令
-- [ ] 会使用SSH连接服务器
-- [ ] 理解GPU显存和VRAM概念
-- [ ] 知道如何使用`pm2`查看日志
+> 📋 **目的**: 确保代码在GPU环境部署前完全验证，避免浪费GPU资源
 
 ---
 
-## 🚀 部署步骤检查
+## ✅ Phase 1: CPU环境验证 (本地/开发服务器)
 
-### 第1步：创建RunPod实例
+### 1.1 环境配置
 
-- [ ] 登录RunPod控制台
-- [ ] 点击"Deploy"创建新实例
-- [ ] 选择GPU：**RTX 3090 (24GB)** ✅ 推荐
-- [ ] 配置Container Disk：**100 GB** 或更大
-- [ ] 暴露端口：**80** (HTTP)
-- [ ] 点击"Deploy"并等待启动（约1-2分钟）
-- [ ] 记录实例信息：
-  ```
-  Pod ID: _______________
-  SSH地址: _______________
-  HTTP地址: _______________
-  密码: _______________
-  ```
+- [ ] 已创建 `.env.development` 文件
+- [ ] `USE_MOCK_AI_SERVICES=true` 已设置
+- [ ] Mock服务端口配置正确 (5000, 8188)
+- [ ] 数据库路径配置正确
+- [ ] 上传目录权限正确
 
-### 第2步：连接到服务器
-
-#### 方法A：SSH连接（推荐）
-- [ ] 打开终端（Windows: PowerShell, Mac/Linux: Terminal）
-- [ ] 执行：`ssh root@<RunPod-IP> -p <端口>`
-- [ ] 输入密码并成功连接
-- [ ] 看到欢迎信息和命令提示符
-
-#### 方法B：Web Terminal
-- [ ] 在RunPod控制台点击"Connect"
-- [ ] 选择"Start Web Terminal"
-- [ ] 在浏览器中成功打开终端
-
-### 第3步：检查环境
+### 1.2 依赖安装
 
 ```bash
-# 检查GPU
-- [ ] nvidia-smi  # 应显示GPU信息
-      GPU: RTX 3090 24GB ✅
-      CUDA Version: 11.x 或 12.x ✅
-
-# 检查工作目录
-- [ ] cd /workspace && pwd  # 应显示 /workspace
-      或 cd ~ && pwd  # 显示 /root
-
-# 检查网络
-- [ ] ping -c 3 google.com  # 应有响应
+cd /home/user/webapp
+npm install
 ```
 
-### 第4步：克隆项目代码
+- [ ] 所有npm依赖安装成功
+- [ ] 无`ENOENT`或`ERR_MODULE_NOT_FOUND`错误
+- [ ] `uuid`包已安装 (videoGenerationService需要)
+
+### 1.3 Mock服务启动
 
 ```bash
-cd /workspace  # 或 cd ~
-
-# 克隆仓库
-- [ ] git clone https://github.com/你的用户名/videoai-pro.git
-      Cloning into 'videoai-pro'... ✅
-      
-- [ ] cd videoai-pro && ls -la
-      看到文件：deploy_runpod.sh, package.json 等 ✅
+npm run mock:services
 ```
 
-### 第5步：部署VideoAI Pro主应用
+**验证清单**:
+- [ ] Mock IndexTTS2启动成功 (端口5000)
+- [ ] Mock ComfyUI启动成功 (端口8188)
+- [ ] 控制台显示启动日志
+- [ ] 无端口冲突错误
+
+### 1.4 Mock服务健康检查
 
 ```bash
-# 给脚本执行权限
-- [ ] chmod +x deploy_runpod.sh
-
-# 运行部署脚本
-- [ ] bash deploy_runpod.sh
-      
-      等待过程中应看到：
-      - [ ] ✅ 更新系统
-      - [ ] ✅ 安装Node.js 20
-      - [ ] ✅ 安装Redis
-      - [ ] ✅ 安装FFmpeg
-      - [ ] ✅ 安装PM2
-      - [ ] ✅ 克隆项目（或跳过）
-      - [ ] ✅ 安装依赖
-      - [ ] ✅ 构建前端
-      - [ ] ✅ 配置Nginx
-      - [ ] ✅ 启动服务
-      
-      预计时间：5-10分钟 ⏱️
-
-# 验证部署成功
-- [ ] 看到成功消息：
-      ```
-      ================================================
-      ✅ VideoAI Pro 部署完成！
-      ================================================
-      ```
-```
-
-### 第6步：验证主应用服务
-
-```bash
-# 检查PM2服务状态
-- [ ] pm2 status
-      应该看到：
-      ┌─────┬────────┬─────────┐
-      │ id  │ name   │ status  │
-      ├─────┼────────┼─────────┤
-      │ 0   │ videoai│ online  │✅
-      └─────┴────────┴─────────┘
-
-# 检查Nginx状态
-- [ ] systemctl status nginx
-      Active: active (running) ✅
-
-# 检查Redis
-- [ ] redis-cli ping
-      PONG ✅
-
-# 测试后端API
-- [ ] curl http://localhost:3001/api/health
-      应返回：{"status":"healthy"} ✅
-```
-
-### 第7步：访问网站前端
-
-```bash
-# 获取公网IP
-- [ ] curl ifconfig.me
-      记录IP: _______________
-
-# 在浏览器访问
-- [ ] 打开浏览器，访问：
-      http://<你的RunPod-IP>
-      或
-      https://<xxxxx>-80.proxy.runpod.net
-      
-      应该看到：
-      - [ ] VideoAI Pro 登录/注册页面 ✅
-      - [ ] 页面样式正常加载 ✅
-      - [ ] 无明显错误提示 ✅
-```
-
-### 第8步：部署AI服务（IndexTTS2 + ComfyUI）
-
-```bash
-cd /workspace/videoai-pro
-
-# 给脚本执行权限
-- [ ] chmod +x deploy_ai_services.sh
-
-# 运行AI服务部署
-- [ ] bash deploy_ai_services.sh
-      
-      预计时间：30-60分钟 ⏱️
-      
-      过程中应看到：
-      - [ ] ✅ 克隆IndexTTS2
-      - [ ] ✅ 创建Python虚拟环境
-      - [ ] ✅ 安装依赖包
-      - [ ] ✅ 下载模型文件（较慢）
-      - [ ] ✅ 启动TTS服务
-      - [ ] ✅ 克隆ComfyUI
-      - [ ] ✅ 安装MuseTalk
-      - [ ] ✅ 启动视频生成服务
-      
-# ⚠️ 注意：模型下载可能很慢
-      - 如果下载失败，可以手动下载后上传
-      - 或使用国内镜像
-```
-
-### 第9步：验证AI服务
-
-```bash
-# 检查所有PM2服务
-- [ ] pm2 status
-      应该看到3个服务都在运行：
-      ┌─────┬────────────┬─────────┐
-      │ id  │ name       │ status  │
-      ├─────┼────────────┼─────────┤
-      │ 0   │ videoai    │ online  │✅
-      │ 1   │ indextts2  │ online  │✅
-      │ 2   │ comfyui    │ online  │✅
-      └─────┴────────────┴─────────┘
-
 # 测试IndexTTS2
-- [ ] curl http://localhost:9880/health
-      应返回：{"status":"healthy"} ✅
+curl http://localhost:5000/health
 
 # 测试ComfyUI
-- [ ] curl http://localhost:8188/system_stats
-      应返回GPU信息 ✅
-
-# 检查GPU使用
-- [ ] nvidia-smi
-      应看到IndexTTS2和ComfyUI进程 ✅
+curl http://localhost:8188/system_stats
 ```
 
-### 第10步：端到端测试
+**验证清单**:
+- [ ] IndexTTS2返回`{"status":"healthy","mode":"MOCK"}`
+- [ ] ComfyUI返回系统状态JSON
+- [ ] 响应时间 < 1秒
+
+---
+
+## ✅ Phase 2: 自动化测试验证
+
+### 2.1 Mock服务测试
 
 ```bash
-# 在网站上测试完整流程
-- [ ] 注册新账号
-      用户名：testuser
-      邮箱：test@example.com
-      密码：Test123456
-      
-- [ ] 登录成功 ✅
-
-- [ ] 点击"创建视频"
-      
-- [ ] Step 1: 输入文本
-      文本："大家好，欢迎来到VideoAI Pro！"
-      点击"优化文本" ✅
-      
-- [ ] Step 2: 音频预览
-      选择声音："磁性男声"
-      点击"试听" ✅
-      能听到声音 ✅
-      
-- [ ] Step 3: 选择模板
-      选择任意模板 ✅
-      
-- [ ] Step 4: 确认配置
-      查看费用估算 ✅
-      点击"开始生成" ✅
-      
-- [ ] 进入"我的任务"
-      看到任务状态："处理中" ✅
-      
-- [ ] 等待2-5分钟
-      任务状态变为："已完成" ✅
-      
-- [ ] 点击播放视频
-      视频正常播放 ✅
-      声音和画面同步 ✅
+node tests/test-mock-services.js
 ```
 
----
+**预期结果**:
+- [ ] ✅ 测试1: IndexTTS2健康检查通过
+- [ ] ✅ 测试2: TTS生成成功 (音频 > 1KB)
+- [ ] ✅ 测试3: 声音列表获取成功
+- [ ] ✅ 测试4: ComfyUI系统状态通过
+- [ ] ✅ 测试5: 工作流提交成功
+- [ ] ✅ 测试6: 任务状态查询成功
 
-## ✅ 部署后配置
-
-### 安全设置
-
-- [ ] 修改root密码：`passwd`
-- [ ] 配置SSH密钥登录（可选）
-- [ ] 设置防火墙规则（可选）
-
-### 性能优化
-
-- [ ] 查看GPU使用率是否正常
-- [ ] 查看内存使用情况：`free -h`
-- [ ] 查看磁盘空间：`df -h`
-- [ ] 设置定时任务（可选）：`crontab -e`
-
-### 备份配置
-
-- [ ] 备份数据库：
-      ```bash
-      mkdir -p /workspace/backups
-      cp /workspace/videoai-pro/data/database.sqlite \
-         /workspace/backups/db_$(date +%Y%m%d).sqlite
-      ```
-
-- [ ] 备份环境配置：
-      ```bash
-      cp /workspace/videoai-pro/.env \
-         /workspace/backups/.env.backup
-      ```
-
-### 监控设置
-
-- [ ] 配置PM2日志：`pm2 logs --lines 100`
-- [ ] 设置GPU监控：`watch -n 2 nvidia-smi`
-- [ ] 配置磁盘空间告警（可选）
-
----
-
-## 🐛 问题排查检查点
-
-### 如果服务无法启动
-
-- [ ] 查看PM2日志：`pm2 logs <service-name>`
-- [ ] 检查端口占用：`netstat -tlnp`
-- [ ] 检查磁盘空间：`df -h`
-- [ ] 重启服务：`pm2 restart all`
-
-### 如果无法访问网站
-
-- [ ] 检查Nginx：`systemctl status nginx`
-- [ ] 测试Nginx配置：`nginx -t`
-- [ ] 检查防火墙：`ufw status`
-- [ ] 重启Nginx：`systemctl restart nginx`
-
-### 如果TTS生成失败
-
-- [ ] 查看IndexTTS2日志：`pm2 logs indextts2`
-- [ ] 检查模型文件：`ls -lh /workspace/IndexTTS2/checkpoints/`
-- [ ] 测试TTS API：`curl http://localhost:9880/health`
-- [ ] 重启TTS服务：`pm2 restart indextts2`
-
-### 如果视频生成失败
-
-- [ ] 查看ComfyUI日志：`pm2 logs comfyui`
-- [ ] 检查GPU内存：`nvidia-smi`
-- [ ] 检查模型文件：`ls -lh /workspace/ComfyUI/models/`
-- [ ] 重启视频服务：`pm2 restart comfyui`
-
----
-
-## 📝 记录信息
-
-### 服务器信息
-
-```
-RunPod实例ID: _______________
-GPU型号: _______________
-公网IP: _______________
-SSH端口: _______________
-创建时间: _______________
-```
-
-### 服务端口
-
-```
-前端: http://IP:80
-后端API: http://localhost:3001
-IndexTTS2: http://localhost:9880
-ComfyUI: http://localhost:8188
-Redis: localhost:6379
-```
-
-### 账号信息
-
-```
-Root密码: _______________
-测试账号: _______________
-测试密码: _______________
-```
-
-### 重要路径
-
-```
-项目目录: /workspace/videoai-pro
-数据库: /workspace/videoai-pro/data/database.sqlite
-上传目录: /workspace/videoai-pro/public/uploads
-生成目录: /workspace/videoai-pro/public/generated
-TTS目录: /workspace/IndexTTS2
-ComfyUI目录: /workspace/ComfyUI
-```
-
----
-
-## 🎉 部署完成标志
-
-当你完成以下所有检查项，部署就算成功了：
-
-- ✅ 所有PM2服务状态为 `online`
-- ✅ Nginx服务正常运行
-- ✅ Redis可以正常连接
-- ✅ 前端页面可以访问
-- ✅ 可以注册和登录
-- ✅ 可以试听声音
-- ✅ 可以生成视频
-- ✅ 视频可以正常播放
-
----
-
-## 📚 有用的命令
+### 2.2 视频生成服务测试
 
 ```bash
-# 查看所有服务
-pm2 status
+node tests/test-video-generation.js
+```
 
-# 查看日志
+**预期结果**:
+- [ ] ✅ 测试1: 文本分段功能正常
+- [ ] ✅ 测试2: TTS音频生成成功
+- [ ] ✅ 测试3: 完整文本音频生成成功
+- [ ] ✅ 测试4: ComfyUI工作流构建正确
+- [ ] ✅ 测试5: ComfyUI任务提交成功
+- [ ] ✅ 测试6: 任务状态轮询完成
+
+**总计**: [ ] 6/6 测试通过
+
+---
+
+## ✅ Phase 3: 后端API功能验证
+
+### 3.1 启动后端服务
+
+```bash
+# 启动完整开发环境
+npm run dev:mock
+```
+
+**验证清单**:
+- [ ] Mock服务运行中
+- [ ] 后端服务启动成功 (端口3001)
+- [ ] 前端服务启动成功 (端口5173)
+- [ ] 控制台显示AI服务配置为"Mock (CPU模拟)"
+
+### 3.2 用户认证API
+
+```bash
+# 注册用户
+curl -X POST http://localhost:3001/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","email":"test@example.com","password":"Test123456"}'
+
+# 登录
+curl -X POST http://localhost:3001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"Test123456"}'
+```
+
+**验证清单**:
+- [ ] 注册返回用户信息和JWT token
+- [ ] 登录返回JWT token
+- [ ] 数据库user表有新记录
+- [ ] 初始积分正确 (1000)
+
+### 3.3 声音上传API
+
+```bash
+# 上传音频文件 (替换YOUR_JWT_TOKEN)
+curl -X POST http://localhost:3001/api/upload/audio \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "audio=@test.mp3" \
+  -F "voiceName=测试声音"
+```
+
+**验证清单**:
+- [ ] 上传成功返回voice_id
+- [ ] 文件保存到uploads目录
+- [ ] 数据库user_voices表有记录
+- [ ] 状态为`processing`
+- [ ] 克隆任务自动触发
+- [ ] 状态更新为`ready` (Mock模式即时)
+
+### 3.4 TTS预览API
+
+```bash
+# TTS试听
+curl -X POST http://localhost:3001/api/preview/tts \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"这是测试文本","voiceId":"default"}' \
+  --output preview.wav
+```
+
+**验证清单**:
+- [ ] 返回WAV音频文件
+- [ ] 文件大小 > 1KB
+- [ ] 可以播放 (即使是模拟音频)
+- [ ] 响应时间 < 2秒
+
+---
+
+## ✅ Phase 4: 前端功能验证
+
+### 4.1 用户注册/登录
+
+**访问**: `http://localhost:5173`
+
+- [ ] 注册页面正常显示
+- [ ] 注册表单验证正确
+- [ ] 注册成功跳转到主页
+- [ ] 登录页面正常显示
+- [ ] 登录成功显示用户信息
+
+### 4.2 声音管理
+
+- [ ] 声音上传页面正常
+- [ ] 文件选择器工作
+- [ ] 上传进度显示
+- [ ] 上传成功提示
+- [ ] 我的声音列表显示
+- [ ] 声音状态正确显示 (processing/ready)
+
+### 4.3 TTS试听
+
+- [ ] TTS页面正常显示
+- [ ] 文本输入框正常
+- [ ] 声音选择下拉框正常
+- [ ] 试听按钮可点击
+- [ ] 音频播放器显示
+- [ ] 音频可以播放
+
+### 4.4 视频项目创建
+
+- [ ] 模板选择页面显示
+- [ ] 模板卡片正常渲染
+- [ ] 创建项目表单正常
+- [ ] 文本编辑器工作
+- [ ] 声音选择正常
+- [ ] 提交后任务队列显示
+
+---
+
+## ✅ Phase 5: 数据库完整性验证
+
+```bash
+# 查看数据库
+cd /home/user/webapp
+sqlite3 database/videoai.db
+```
+
+### 5.1 用户表
+
+```sql
+SELECT * FROM users;
+```
+
+**验证清单**:
+- [ ] 用户记录存在
+- [ ] email唯一
+- [ ] password已哈希
+- [ ] credits正确
+
+### 5.2 声音表
+
+```sql
+SELECT * FROM user_voices;
+```
+
+**验证清单**:
+- [ ] 声音记录存在
+- [ ] user_id关联正确
+- [ ] audio_url路径正确
+- [ ] status字段正确
+- [ ] processed_at有时间戳 (ready状态)
+
+### 5.3 项目表
+
+```sql
+SELECT * FROM projects;
+```
+
+**验证清单**:
+- [ ] 项目记录存在
+- [ ] user_id关联正确
+- [ ] template_id关联正确
+- [ ] voice_id关联正确
+- [ ] status字段正确
+
+---
+
+## ✅ Phase 6: 错误处理验证
+
+### 6.1 文件上传错误
+
+- [ ] 上传非音频文件 → 返回错误提示
+- [ ] 上传超大文件 (>50MB) → 返回错误提示
+- [ ] 未登录上传 → 返回401错误
+
+### 6.2 积分不足
+
+- [ ] 模拟积分不足情况
+- [ ] 前端显示积分不足提示
+- [ ] 阻止生成任务提交
+
+### 6.3 服务不可用
+
+```bash
+# 停止Mock服务
+pkill -f mockIndexTTS2
+
+# 测试TTS (应该优雅失败)
+curl -X POST http://localhost:3001/api/preview/tts \
+  -H "Content-Type: application/json" \
+  -d '{"text":"测试","voiceId":"default"}'
+```
+
+**验证清单**:
+- [ ] 返回友好错误消息
+- [ ] 不返回500错误
+- [ ] 前端显示服务不可用提示
+
+---
+
+## ✅ Phase 7: 性能验证
+
+### 7.1 并发测试
+
+```bash
+# 使用ab工具测试
+ab -n 100 -c 10 http://localhost:3001/api/preview/tts
+```
+
+**验证清单**:
+- [ ] 无服务崩溃
+- [ ] 平均响应时间 < 2秒
+- [ ] 错误率 < 1%
+
+### 7.2 大文本处理
+
+```bash
+# 测试1000字文本
+node tests/test-long-text.js
+```
+
+**验证清单**:
+- [ ] 文本分段正常
+- [ ] 所有分段生成TTS
+- [ ] 音频合并成功
+- [ ] 总时间 < 30秒 (Mock模式)
+
+---
+
+## 🚀 Phase 8: GPU部署准备
+
+### 8.1 代码审查
+
+- [ ] 所有TODO注释已处理
+- [ ] 无console.log泄露敏感信息
+- [ ] 无硬编码路径
+- [ ] 环境变量配置完整
+
+### 8.2 生产环境配置
+
+- [ ] `.env.production` 文件已创建
+- [ ] `USE_MOCK_AI_SERVICES=false`
+- [ ] GPU服务URL配置正确
+- [ ] JWT_SECRET已更换为强密钥
+- [ ] 数据库路径配置为生产路径
+
+### 8.3 部署脚本验证
+
+```bash
+# 检查脚本语法
+bash -n deploy_indextts2.sh
+bash -n install_comfyui.sh
+
+# 确认脚本可执行
+ls -l *.sh
+```
+
+**验证清单**:
+- [ ] 无语法错误
+- [ ] 所有脚本有执行权限
+- [ ] GitHub repo URLs正确 (无placeholder)
+
+### 8.4 PM2配置
+
+```bash
+# 验证ecosystem.config.js
+cat ecosystem.config.js
+```
+
+**验证清单**:
+- [ ] 包含videoai-backend配置
+- [ ] 包含indextts2配置
+- [ ] 包含comfyui配置 (如需要)
+- [ ] 环境变量设置正确
+- [ ] 日志路径配置正确
+
+---
+
+## 🎯 最终确认清单
+
+在部署到GPU前，确认以下所有项目:
+
+### 代码质量
+- [ ] ✅ 所有自动化测试通过
+- [ ] ✅ 所有手动测试完成
+- [ ] ✅ 无严重Bug或逻辑错误
+- [ ] ✅ 错误处理完善
+
+### 功能完整性
+- [ ] ✅ 用户认证功能正常
+- [ ] ✅ 声音上传/克隆正常
+- [ ] ✅ TTS生成正常
+- [ ] ✅ 文本处理正常
+- [ ] ✅ 视频生成流程完整
+
+### 数据库
+- [ ] ✅ 所有表结构正确
+- [ ] ✅ 索引创建完成
+- [ ] ✅ 外键关系正确
+- [ ] ✅ 迁移脚本无错误
+
+### 配置文件
+- [ ] ✅ 开发环境配置正确
+- [ ] ✅ 生产环境配置准备好
+- [ ] ✅ 环境切换机制测试通过
+- [ ] ✅ 敏感信息已保护
+
+### 部署准备
+- [ ] ✅ GitHub代码已推送
+- [ ] ✅ 部署脚本已验证
+- [ ] ✅ PM2配置已准备
+- [ ] ✅ 文档完整
+
+---
+
+## 📝 部署命令 (仅在所有检查通过后执行)
+
+```bash
+# 1. SSH连接到RunPod H100
+ssh root@your-runpod-instance
+
+# 2. 克隆代码
+cd /workspace
+git clone https://github.com/your-username/videoai-pro.git
+cd videoai-pro
+
+# 3. 切换到生产环境
+export NODE_ENV=production
+
+# 4. 部署IndexTTS2
+bash deploy_indextts2.sh
+
+# 5. 安装ComfyUI (如需要)
+bash install_comfyui.sh
+
+# 6. 安装Node.js依赖
+npm install --production
+
+# 7. 启动所有服务
+pm2 start ecosystem.config.js
+
+# 8. 查看日志
 pm2 logs
-
-# 重启所有服务
-pm2 restart all
-
-# 查看GPU
-nvidia-smi
-
-# 查看磁盘
-df -h
-
-# 查看内存
-free -h
-
-# 测试网络
-ping google.com
-
-# 查看进程
-htop
 ```
 
 ---
 
-## 💡 下一步
+## 🎉 祝贺!
 
-部署完成后，你可以：
+如果所有检查项都完成，您的代码已经准备好部署到GPU环境！
 
-1. 🎨 **自定义模板** - 添加更多视频模板
-2. 🎤 **上传声音** - 克隆自己的声音
-3. 📊 **查看统计** - 分析使用数据
-4. 🔧 **优化配置** - 调整生成参数
-5. 💰 **成本优化** - 实施省钱策略
+**关键提示**:
+- 部署到GPU后，第一次启动会下载模型 (约20GB，需10-30分钟)
+- 监控PM2日志确保服务正常启动
+- 再次运行健康检查确认真实服务可用
+- 进行小规模用户测试后再全面开放
 
----
-
-**祝你部署顺利！🚀**
-
-如有问题，参考：
-- `RunPod部署教程.md` - 详细教程
-- `RunPod快速命令.md` - 命令速查
-- `DEPLOYMENT_FLOW.md` - 架构图
+祝部署顺利! 🚀

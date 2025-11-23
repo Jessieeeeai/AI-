@@ -1,389 +1,464 @@
 /**
- * 视频生成服务 - 整合 IndexTTS2 和 ComfyUI
- * 
- * 流程：
- * 1. 文本分段（智能分割）
- * 2. 调用 IndexTTS2 生成音频
- * 3. 调用 ComfyUI 生成视频（Wan2.1 + InfiniteTalk）
- * 4. 合并视频片段
- * 5. 更新任务状态
+ * 视频生成服务
+ * 支持Mock模式（CPU开发）和Real模式（GPU生产）
  */
 
 import axios from 'axios';
-import { Task } from '../models/Task.js';
-import { User } from '../models/User.js';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { promisify } from 'util';
+import { exec } from 'child_process';
+import { v4 as uuidv4 } from 'uuid';
+import { dbRun, dbGet, dbAll } from '../config/database.js';
+import { aiServicesConfig } from '../config/aiServices.js';
 
-const execAsync = promisify(exec);
-
-// 配置
-const INDEXTTS2_API_URL = process.env.INDEXTTS2_API_URL || 'http://localhost:5000';
-const COMFYUI_API_URL = process.env.COMFYUI_API_URL || 'http://localhost:8188';
-const OUTPUT_DIR = path.join(process.cwd(), 'public/generated');
-const TEMPLATES_DIR = path.join(process.cwd(), 'public/templates');
-
-// 确保模板目录存在
-if (!fs.existsSync(TEMPLATES_DIR)) {
-  fs.mkdirSync(TEMPLATES_DIR, { recursive: true });
-}
-
-// 确保输出目录存在
-if (!fs.existsSync(OUTPUT_DIR)) {
-  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-}
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const execPromise = promisify(exec);
 
 /**
- * 生成视频的主函数
+ * 视频生成服务类
  */
-export async function generateVideo(taskId) {
-  try {
-    console.log(`🎬 开始生成视频: ${taskId}`);
+class VideoGenerationService {
+  constructor() {
+    this.indextts2Url = aiServicesConfig.indexTTS2.apiUrl;
+    this.comfyuiUrl = aiServicesConfig.comfyUI.apiUrl;
+    this.useMock = aiServicesConfig.useMock;
     
-    // 获取任务详情
-    const task = await Task.findById(taskId);
-    if (!task) {
-      throw new Error('任务不存在');
-    }
-
-    // 更新状态为处理中
-    await Task.updateStatus(taskId, 'processing', 10);
-
-    // Step 1: 智能文本分段
-    const segments = Task.segmentText(task.text);
-    console.log(`📝 文本已分为 ${segments.length} 段`);
-
-    // Step 2: 为每个段生成音频和视频
-    const generatedSegments = [];
-    for (let i = 0; i < segments.length; i++) {
-      console.log(`🎵 处理第 ${i + 1}/${segments.length} 段...`);
-      
-      // 更新进度
-      const progress = 10 + (i / segments.length) * 80;
-      await Task.updateStatus(taskId, 'processing', Math.floor(progress));
-
-      // 生成音频
-      const audioPath = await generateAudio(
-        segments[i],
-        task.voice_settings,
-        task.voice_id,
-        i
-      );
-
-      // 生成视频
-      const videoPath = await generateVideoSegment(
-        audioPath,
-        task.template_id,
-        task.is_custom_template,
-        i
-      );
-
-      generatedSegments.push({
-        audio: audioPath,
-        video: videoPath,
-        text: segments[i]
-      });
-    }
-
-    // Step 3: 合并视频片段
-    console.log('🎞️ 合并视频片段...');
-    await Task.updateStatus(taskId, 'processing', 90);
+    this.audioOutputDir = aiServicesConfig.storage.audioOutputDir;
+    this.videoOutputDir = aiServicesConfig.storage.videoOutputDir;
     
-    const finalVideoPath = await mergeVideoSegments(
-      generatedSegments.map(s => s.video),
-      taskId
-    );
-
-    // Step 4: 生成缩略图
-    const thumbnailPath = await generateThumbnail(finalVideoPath);
-
-    // Step 5: 更新任务结果
-    const audioUrl = `/public/generated/${path.basename(generatedSegments[0].audio)}`;
-    const videoUrl = `/public/generated/${path.basename(finalVideoPath)}`;
-    const thumbnailUrl = `/public/generated/${path.basename(thumbnailPath)}`;
-
-    await Task.updateResult(taskId, audioUrl, videoUrl, thumbnailUrl);
-    await Task.updateStatus(taskId, 'completed', 100);
-
-    console.log(`✅ 视频生成完成: ${taskId}`);
+    // 确保输出目录存在
+    this.ensureDirectories();
     
-    // TODO: 发送通知给用户
-
-    return {
-      success: true,
-      videoUrl,
-      thumbnailUrl
-    };
-
-  } catch (error) {
-    console.error(`❌ 视频生成失败: ${taskId}`, error);
-    
-    // 更新任务状态为失败
-    await Task.updateStatus(taskId, 'failed', 0, error.message);
-    
-    // 退还积分给用户
-    const task = await Task.findById(taskId);
-    if (task) {
-      await User.addCredits(task.user_id, task.total_cost);
-      console.log(`💰 已退还 ${task.total_cost} 积分给用户 ${task.user_id}`);
-    }
-
-    throw error;
+    console.log(`🎬 VideoGenerationService初始化 | 模式: ${this.useMock ? 'Mock (CPU)' : 'Real (GPU)'}`);
   }
-}
 
-/**
- * 使用 IndexTTS2 生成音频
- * 
- * IndexTTS2 情感向量格式: [happy, angry, sad, afraid, disgusted, melancholic, surprised, calm]
- * 我们的格式: {happiness, sadness, anger, surprise} -> 映射到 IndexTTS2
- */
-async function generateAudio(text, voiceSettings, voiceId, segmentIndex) {
-  try {
-    console.log(`🎤 调用 IndexTTS2 生成音频...`);
-
-    // 将我们的情感参数映射到 IndexTTS2 的 8 维情感向量
-    // IndexTTS2: [happy, angry, sad, afraid, disgusted, melancholic, surprised, calm]
-    const emotionVector = [
-      voiceSettings.happiness || 0.7,  // happy
-      voiceSettings.anger || 0.0,      // angry
-      voiceSettings.sadness || 0.1,    // sad
-      0.0,                              // afraid
-      0.0,                              // disgusted
-      0.0,                              // melancholic
-      voiceSettings.surprise || 0.3,   // surprised
-      1.0 - (voiceSettings.happiness || 0.7)  // calm (反向计算)
-    ];
-
-    // 准备请求参数
-    const requestData = {
-      text: text,
-      spk_audio_prompt: voiceId ? `uploads/voices/${voiceId}` : null,  // 自定义声音文件路径
-      emo_vector: emotionVector,
-      emo_alpha: 0.8,  // 情感强度
-      use_random: false,  // 不使用随机性以保持一致性
-      pitch_scale: voiceSettings.pitch || 1.0,
-      speed_scale: voiceSettings.speed || 1.0
-    };
-
-    // 调用 IndexTTS2 HTTP API
-    const response = await axios.post(`${INDEXTTS2_API_URL}/api/v1/tts`, requestData, {
-      timeout: 300000, // 5分钟超时
-      responseType: 'arraybuffer'  // 接收音频二进制数据
+  /**
+   * 确保必要目录存在
+   */
+  ensureDirectories() {
+    const dirs = [this.audioOutputDir, this.videoOutputDir];
+    dirs.forEach(dir => {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+        console.log(`📁 创建目录: ${dir}`);
+      }
     });
-
-    // 保存音频文件
-    const audioFileName = `audio_${Date.now()}_${segmentIndex}.wav`;
-    const audioPath = path.join(OUTPUT_DIR, audioFileName);
-    fs.writeFileSync(audioPath, response.data);
-
-    console.log(`✅ 音频生成成功: ${audioFileName}`);
-    return audioPath;
-
-  } catch (error) {
-    console.error('IndexTTS2 生成音频失败:', error.message);
-    
-    // 如果是网络错误,提供更详细的错误信息
-    if (error.code === 'ECONNREFUSED') {
-      throw new Error(`无法连接到 IndexTTS2 服务 (${INDEXTTS2_API_URL}). 请确认服务已启动。`);
-    }
-    
-    throw new Error(`音频生成失败: ${error.message}`);
   }
-}
 
-/**
- * 使用 ComfyUI 生成视频片段
- */
-async function generateVideoSegment(audioPath, templateId, isCustomTemplate, segmentIndex) {
-  try {
-    console.log(`🎬 调用 ComfyUI 生成视频...`);
+  /**
+   * 文本分段
+   * 将长文本智能分割为适合TTS的短句
+   * @param {string} text - 输入文本
+   * @param {number} maxLength - 每段最大长度
+   * @returns {Array<string>} 分段后的文本数组
+   */
+  segmentText(text, maxLength = 100) {
+    console.log(`✂️ 开始文本分段 | 原始长度: ${text.length} | 最大段长: ${maxLength}`);
 
-    // 准备 ComfyUI workflow
-    const workflow = await prepareComfyUIWorkflow(audioPath, templateId, isCustomTemplate);
+    // 按标点符号分割
+    const sentenceEndings = /([。！？；.!?;])/g;
+    const sentences = text.split(sentenceEndings).reduce((acc, curr, idx, arr) => {
+      if (idx % 2 === 0 && arr[idx + 1]) {
+        acc.push(curr + arr[idx + 1]);
+      } else if (idx % 2 === 0) {
+        acc.push(curr);
+      }
+      return acc;
+    }, []).filter(s => s.trim());
 
-    // 提交到 ComfyUI
-    const promptResponse = await axios.post(`${COMFYUI_API_URL}/prompt`, {
-      prompt: workflow,
-      client_id: `videoai_${Date.now()}`
-    });
+    // 合并短句
+    const segments = [];
+    let currentSegment = '';
 
-    const promptId = promptResponse.data.prompt_id;
-    console.log(`📤 任务已提交到 ComfyUI: ${promptId}`);
-
-    // 轮询检查任务状态
-    let videoPath = null;
-    let attempts = 0;
-    const maxAttempts = 120; // 最多等待10分钟（5秒一次）
-
-    while (attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 5000)); // 等待5秒
-
-      // 检查任务状态
-      const historyResponse = await axios.get(`${COMFYUI_API_URL}/history/${promptId}`);
-      const history = historyResponse.data[promptId];
-
-      if (history && history.status && history.status.completed) {
-        // 获取输出文件
-        const outputs = history.outputs;
-        // TODO: 根据您的工作流调整输出节点ID
-        const videoNode = outputs['SaveVideo'] || outputs['VHS_VideoCombine'];
-        
-        if (videoNode && videoNode.videos && videoNode.videos.length > 0) {
-          const videoInfo = videoNode.videos[0];
-          videoPath = await downloadFromComfyUI(videoInfo.filename, segmentIndex);
-          break;
+    for (const sentence of sentences) {
+      if (currentSegment.length + sentence.length <= maxLength) {
+        currentSegment += sentence;
+      } else {
+        if (currentSegment) {
+          segments.push(currentSegment.trim());
         }
+        currentSegment = sentence;
+      }
+    }
+
+    if (currentSegment) {
+      segments.push(currentSegment.trim());
+    }
+
+    console.log(`✅ 文本分段完成 | 分段数: ${segments.length}`);
+    return segments;
+  }
+
+  /**
+   * 生成TTS音频
+   * @param {string} text - 文本内容
+   * @param {string} voiceId - 声音ID
+   * @param {string} outputPath - 输出路径
+   * @returns {Promise<string>} 生成的音频文件路径
+   */
+  async generateTTS(text, voiceId = 'default', outputPath = null) {
+    try {
+      console.log(`🎤 生成TTS | 文本长度: ${text.length} | 声音: ${voiceId}`);
+
+      const response = await axios.post(
+        `${this.indextts2Url}/api/v1/tts`,
+        {
+          text,
+          voiceId,
+          emoVector: [0.7, 0, 0.1, 0, 0, 0, 0.3, 0.3],
+          emoAlpha: 0.8
+        },
+        {
+          responseType: 'arraybuffer',
+          timeout: aiServicesConfig.indexTTS2.timeout
+        }
+      );
+
+      // 保存音频
+      if (!outputPath) {
+        outputPath = path.join(this.audioOutputDir, `tts_${Date.now()}_${uuidv4()}.wav`);
       }
 
-      attempts++;
-    }
+      fs.writeFileSync(outputPath, Buffer.from(response.data));
+      console.log(`✅ TTS生成成功: ${outputPath}`);
 
-    if (!videoPath) {
-      throw new Error('ComfyUI 视频生成超时');
-    }
+      return outputPath;
 
-    console.log(`✅ 视频生成成功: ${path.basename(videoPath)}`);
-    return videoPath;
-
-  } catch (error) {
-    console.error('ComfyUI 生成视频失败:', error.message);
-    throw new Error(`视频生成失败: ${error.message}`);
-  }
-}
-
-/**
- * 准备 ComfyUI 工作流 - 基于用户提供的真实工作流
- * 
- * 关键节点:
- * - Node 6: LoadAudio (音频输入)
- * - Node 168: VHS_LoadVideo (视频/图像模板输入)
- * - Node 137: MultiTalkModelLoader (InfiniteTalk 模型)
- * - Node 176: WanVideoModelLoader (Wan2.1-I2V-14B-480p 模型)
- * - Node 131: MultiTalkWav2VecEmbeds (音频嵌入处理)
- * - Node 166: WanVideoImageToVideoMultiTalk (核心生成节点)
- * - Node 151: VHS_VideoCombine (视频输出)
- */
-async function prepareComfyUIWorkflow(audioPath, templateId, isCustomTemplate) {
-  // 获取模板文件路径
-  const templatePath = isCustomTemplate 
-    ? `custom/${templateId}.mp4` 
-    : `${templateId}.mp4`;
-
-  // 读取用户上传的完整工作流作为基础
-  const baseWorkflowPath = '/home/user/uploaded_files/数字分身对口型：wan2.1搭配infinitetalk(1).json.txt';
-  const workflowData = JSON.parse(fs.readFileSync(baseWorkflowPath, 'utf-8'));
-  
-  // 修改关键节点的输入
-  for (const node of workflowData.nodes) {
-    // Node 6: 更新音频输入路径
-    if (node.id === 6 && node.type === 'LoadAudio') {
-      node.widgets_values[0] = path.basename(audioPath);
-    }
-    
-    // Node 168: 更新视频模板路径
-    if (node.id === 168 && node.type === 'VHS_LoadVideo') {
-      node.widgets_values.video = templatePath;
-    }
-    
-    // Node 151: 更新输出文件名前缀
-    if (node.id === 151 && node.type === 'VHS_VideoCombine') {
-      node.widgets_values.filename_prefix = `output_${Date.now()}`;
-      node.widgets_values.save_output = true;
+    } catch (error) {
+      console.error('❌ TTS生成失败:', error.message);
+      throw new Error(`TTS生成失败: ${error.message}`);
     }
   }
 
-  return workflowData;
-}
+  /**
+   * 合并多个音频文件
+   * 使用FFmpeg将多个音频片段合并为一个完整音频
+   * @param {Array<string>} audioPaths - 音频文件路径数组
+   * @param {string} outputPath - 输出路径
+   * @returns {Promise<string>} 合并后的音频路径
+   */
+  async mergeAudios(audioPaths, outputPath = null) {
+    try {
+      console.log(`🔗 合并音频 | 片段数: ${audioPaths.length}`);
 
-/**
- * 从 ComfyUI 下载生成的视频
- */
-async function downloadFromComfyUI(filename, segmentIndex) {
-  try {
-    const response = await axios.get(`${COMFYUI_API_URL}/view?filename=${filename}`, {
-      responseType: 'arraybuffer'
-    });
+      if (!outputPath) {
+        outputPath = path.join(this.audioOutputDir, `merged_${Date.now()}.wav`);
+      }
 
-    const videoFileName = `video_${Date.now()}_${segmentIndex}.mp4`;
-    const videoPath = path.join(OUTPUT_DIR, videoFileName);
-    fs.writeFileSync(videoPath, response.data);
+      // 创建FFmpeg文件列表
+      const listFile = path.join(this.audioOutputDir, `concat_${Date.now()}.txt`);
+      const fileContent = audioPaths.map(p => `file '${path.resolve(p)}'`).join('\n');
+      fs.writeFileSync(listFile, fileContent);
 
-    return videoPath;
-  } catch (error) {
-    throw new Error(`下载视频失败: ${error.message}`);
+      // 使用FFmpeg合并
+      const command = `ffmpeg -f concat -safe 0 -i "${listFile}" -c copy "${outputPath}"`;
+      await execPromise(command);
+
+      // 清理临时文件
+      fs.unlinkSync(listFile);
+      audioPaths.forEach(p => {
+        if (fs.existsSync(p)) fs.unlinkSync(p);
+      });
+
+      console.log(`✅ 音频合并成功: ${outputPath}`);
+      return outputPath;
+
+    } catch (error) {
+      console.error('❌ 音频合并失败:', error.message);
+      throw new Error(`音频合并失败: ${error.message}`);
+    }
   }
-}
 
-/**
- * 使用 ffmpeg 合并视频片段
- */
-async function mergeVideoSegments(videoPaths, taskId) {
-  try {
-    if (videoPaths.length === 1) {
-      // 只有一个片段，直接返回
-      return videoPaths[0];
+  /**
+   * 生成完整文本音频（自动分段+TTS+合并）
+   * @param {string} text - 完整文本
+   * @param {string} voiceId - 声音ID
+   * @returns {Promise<string>} 最终音频路径
+   */
+  async generateFullTextAudio(text, voiceId = 'default') {
+    try {
+      console.log(`🎙️ 生成完整文本音频 | 文本长度: ${text.length}`);
+
+      // 1. 文本分段
+      const segments = this.segmentText(text);
+
+      // 2. 为每段生成TTS
+      const audioPaths = [];
+      for (let i = 0; i < segments.length; i++) {
+        const segment = segments[i];
+        const segmentPath = await this.generateTTS(
+          segment,
+          voiceId,
+          path.join(this.audioOutputDir, `segment_${i}_${Date.now()}.wav`)
+        );
+        audioPaths.push(segmentPath);
+      }
+
+      // 3. 合并所有音频
+      if (audioPaths.length === 1) {
+        return audioPaths[0];
+      } else {
+        return await this.mergeAudios(audioPaths);
+      }
+
+    } catch (error) {
+      console.error('❌ 生成完整文本音频失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 构建ComfyUI工作流
+   * 根据模板和参数构建视频生成工作流
+   * @param {Object} params - 工作流参数
+   * @returns {Object} ComfyUI工作流JSON
+   */
+  buildWorkflow(params) {
+    const {
+      templateVideoPath,
+      audioPath,
+      outputFilename = `output_${Date.now()}.mp4`
+    } = params;
+
+    console.log(`🔧 构建ComfyUI工作流 | 模板: ${templateVideoPath} | 音频: ${audioPath}`);
+
+    // 基础Wav2Lip工作流
+    const workflow = {
+      "1": {
+        "class_type": "LoadVideo",
+        "inputs": {
+          "video": templateVideoPath
+        }
+      },
+      "2": {
+        "class_type": "LoadAudio",
+        "inputs": {
+          "audio": audioPath
+        }
+      },
+      "3": {
+        "class_type": "Wav2Lip",
+        "inputs": {
+          "video_frames": ["1", 0],
+          "audio": ["2", 0],
+          "face_detect": "retinaface",
+          "mel_step_size": 16,
+          "quality": "improved"
+        }
+      },
+      "4": {
+        "class_type": "SaveVideo",
+        "inputs": {
+          "frames": ["3", 0],
+          "filename_prefix": outputFilename.replace('.mp4', ''),
+          "format": "video/h264-mp4",
+          "fps": 25,
+          "quality": 90
+        }
+      }
+    };
+
+    return workflow;
+  }
+
+  /**
+   * 提交ComfyUI任务
+   * @param {Object} workflow - 工作流JSON
+   * @returns {Promise<string>} 任务ID (prompt_id)
+   */
+  async submitComfyUIJob(workflow) {
+    try {
+      console.log(`📤 提交ComfyUI任务 | 节点数: ${Object.keys(workflow).length}`);
+
+      const response = await axios.post(
+        `${this.comfyuiUrl}/prompt`,
+        {
+          prompt: workflow,
+          client_id: `videoai_${Date.now()}`
+        },
+        {
+          timeout: 10000
+        }
+      );
+
+      const promptId = response.data.prompt_id;
+      console.log(`✅ 任务提交成功 | ID: ${promptId}`);
+
+      return promptId;
+
+    } catch (error) {
+      console.error('❌ 提交ComfyUI任务失败:', error.message);
+      throw new Error(`ComfyUI任务提交失败: ${error.message}`);
+    }
+  }
+
+  /**
+   * 轮询ComfyUI任务状态
+   * @param {string} promptId - 任务ID
+   * @param {number} maxWaitTime - 最大等待时间（毫秒）
+   * @returns {Promise<Object>} 任务结果
+   */
+  async pollJobStatus(promptId, maxWaitTime = 300000) {
+    const startTime = Date.now();
+    const pollInterval = 2000; // 2秒轮询一次
+
+    console.log(`⏳ 开始轮询任务状态 | ID: ${promptId} | 最大等待: ${maxWaitTime / 1000}s`);
+
+    while (Date.now() - startTime < maxWaitTime) {
+      try {
+        const response = await axios.get(`${this.comfyuiUrl}/history/${promptId}`);
+        const history = response.data[promptId];
+
+        if (history && history.status && history.status.completed) {
+          console.log(`✅ 任务完成 | ID: ${promptId}`);
+          return history;
+        }
+
+        // 等待后继续轮询
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+
+      } catch (error) {
+        console.error(`⚠️  轮询任务状态失败: ${error.message}`);
+      }
     }
 
-    console.log(`🔗 合并 ${videoPaths.length} 个视频片段...`);
+    throw new Error(`任务超时: ${promptId}`);
+  }
 
-    // 创建 ffmpeg concat 文件
-    const concatFileName = `concat_${taskId}.txt`;
-    const concatFilePath = path.join(OUTPUT_DIR, concatFileName);
-    const concatContent = videoPaths.map(p => `file '${p}'`).join('\n');
-    fs.writeFileSync(concatFilePath, concatContent);
+  /**
+   * 下载ComfyUI生成的视频
+   * @param {string} filename - 文件名
+   * @param {string} outputPath - 本地保存路径
+   * @returns {Promise<string>} 本地文件路径
+   */
+  async downloadVideo(filename, outputPath = null) {
+    try {
+      console.log(`📥 下载视频 | 文件名: ${filename}`);
 
-    // 执行 ffmpeg 合并
-    const outputFileName = `final_${taskId}.mp4`;
-    const outputPath = path.join(OUTPUT_DIR, outputFileName);
-    
-    const ffmpegCmd = `ffmpeg -f concat -safe 0 -i ${concatFilePath} -c copy ${outputPath}`;
-    await execAsync(ffmpegCmd);
+      if (!outputPath) {
+        outputPath = path.join(this.videoOutputDir, filename);
+      }
 
-    // 删除临时文件
-    fs.unlinkSync(concatFilePath);
-    videoPaths.forEach(p => {
-      try { fs.unlinkSync(p); } catch (e) {}
-    });
+      const response = await axios.get(
+        `${this.comfyuiUrl}/view?filename=${filename}`,
+        {
+          responseType: 'stream',
+          timeout: 60000
+        }
+      );
 
-    console.log(`✅ 视频合并完成: ${outputFileName}`);
-    return outputPath;
+      const writer = fs.createWriteStream(outputPath);
+      response.data.pipe(writer);
 
-  } catch (error) {
-    throw new Error(`视频合并失败: ${error.message}`);
+      return new Promise((resolve, reject) => {
+        writer.on('finish', () => {
+          console.log(`✅ 视频下载成功: ${outputPath}`);
+          resolve(outputPath);
+        });
+        writer.on('error', reject);
+      });
+
+    } catch (error) {
+      console.error('❌ 视频下载失败:', error.message);
+      throw new Error(`视频下载失败: ${error.message}`);
+    }
+  }
+
+  /**
+   * 生成视频（完整流程）
+   * @param {Object} params - 视频生成参数
+   * @returns {Promise<Object>} 生成结果
+   */
+  async generateVideo(params) {
+    const {
+      text,
+      voiceId = 'default',
+      templateId,
+      projectId,
+      userId
+    } = params;
+
+    try {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🎬 开始视频生成流程');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+      // 1. 生成音频
+      console.log('📍 步骤1: 生成音频...');
+      const audioPath = await this.generateFullTextAudio(text, voiceId);
+
+      // 2. 获取模板视频
+      console.log('📍 步骤2: 获取模板视频...');
+      const template = await dbGet('SELECT * FROM templates WHERE id = ?', [templateId]);
+      if (!template) {
+        throw new Error(`模板不存在: ${templateId}`);
+      }
+
+      // 3. 构建ComfyUI工作流
+      console.log('📍 步骤3: 构建工作流...');
+      const workflow = this.buildWorkflow({
+        templateVideoPath: template.video_url,
+        audioPath,
+        outputFilename: `video_${projectId}_${Date.now()}.mp4`
+      });
+
+      // 4. 提交ComfyUI任务
+      console.log('📍 步骤4: 提交任务...');
+      const promptId = await this.submitComfyUIJob(workflow);
+
+      // 5. 等待任务完成
+      console.log('📍 步骤5: 等待生成...');
+      const result = await this.pollJobStatus(promptId);
+
+      // 6. 下载视频
+      console.log('📍 步骤6: 下载视频...');
+      const outputFilename = result.outputs['4'].videos[0].filename;
+      const localVideoPath = await this.downloadVideo(outputFilename);
+
+      // 7. 更新数据库
+      console.log('📍 步骤7: 更新数据库...');
+      await dbRun(
+        `UPDATE projects SET 
+          video_url = ?, 
+          audio_url = ?,
+          status = ?,
+          completed_at = CURRENT_TIMESTAMP
+        WHERE id = ?`,
+        [localVideoPath, audioPath, 'completed', projectId]
+      );
+
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('✅ 视频生成完成！');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+      return {
+        success: true,
+        videoUrl: localVideoPath,
+        audioUrl: audioPath,
+        projectId
+      };
+
+    } catch (error) {
+      console.error('❌ 视频生成失败:', error);
+
+      // 更新项目状态为失败
+      if (projectId) {
+        await dbRun(
+          'UPDATE projects SET status = ?, error_message = ? WHERE id = ?',
+          ['failed', error.message, projectId]
+        );
+      }
+
+      throw error;
+    }
   }
 }
 
-/**
- * 生成视频缩略图
- */
-async function generateThumbnail(videoPath) {
-  try {
-    const thumbnailFileName = `thumb_${path.basename(videoPath, '.mp4')}.jpg`;
-    const thumbnailPath = path.join(OUTPUT_DIR, thumbnailFileName);
+// 导出单例
+const videoGenerationService = new VideoGenerationService();
 
-    const ffmpegCmd = `ffmpeg -i ${videoPath} -ss 00:00:01 -vframes 1 ${thumbnailPath}`;
-    await execAsync(ffmpegCmd);
-
-    return thumbnailPath;
-  } catch (error) {
-    console.error('生成缩略图失败:', error);
-    // 缩略图不是必需的，失败也继续
-    return null;
-  }
-}
-
-/**
- * 添加任务到队列
- */
-export function queueVideoGeneration(taskId) {
-  // TODO: 使用 Bull Queue 或其他队列系统
-  // 暂时直接调用
-  setTimeout(() => {
-    generateVideo(taskId).catch(error => {
-      console.error(`任务 ${taskId} 处理失败:`, error);
-    });
-  }, 1000);
-}
+export default videoGenerationService;
+export { VideoGenerationService };
