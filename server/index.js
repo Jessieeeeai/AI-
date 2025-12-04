@@ -39,7 +39,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/public', express.static(path.join(__dirname, '../public')));
 
 // 提供前端构建文件
-app.use(express.static(path.join(__dirname, '../dist')));
+// app.use(express.static(path.join(__dirname, '../dist')));
 
 // 健康检查
 app.get('/health', (req, res) => {
@@ -62,11 +62,9 @@ app.use('/api/templates', templatesRoutes);
 
 // 所有其他路由返回index.html（用于React Router）
 app.get('*', (req, res) => {
-  if (req.path.startsWith('/api')) {
-    return res.status(404).json({ error: 'not_found', message: '接口不存在' });
-  }
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
+    res.status(404).json({ error: 'not_found', message: '接口不存在' });
 });
+
 
 // 错误处理
 app.use((err, req, res, next) => {
