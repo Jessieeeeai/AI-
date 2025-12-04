@@ -5,8 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const dbPath = path.join(__dirname, '../../database/videoai.db');
-
+const dbPath = '/tmp/videoai.db';
 // 创建数据库连接
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
