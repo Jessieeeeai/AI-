@@ -7,7 +7,7 @@ export class User {
     const passwordHash = await bcrypt.hash(password, 10);
     const result = await dbRun(
       'INSERT INTO users (email, password_hash, username, credits) VALUES (?, ?, ?, ?)',
-      [email, passwordHash, username, 20] // 新用户送20积分
+      [email, passwordHash, username, 100] // 新用户送20积分
     );
     return result.id;
   }
