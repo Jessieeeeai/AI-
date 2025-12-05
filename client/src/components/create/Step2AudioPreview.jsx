@@ -142,16 +142,15 @@ const Step2AudioPreview = ({ data, setData, onNext, onPrev }) => {
     const file = event.target.files[0];
     if (!file) return;
     
-    // 验证文件类型
     const validTypes = ['audio/wav', 'audio/mpeg', 'audio/mp4', 'audio/x-m4a', 'audio/m4a', 'audio/aac', 'audio/x-m4a'];
     const validExtensions = ['.wav', '.mp3', '.m4a'];
     const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
     
-    if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
+    // 只检查文件扩展名，不依赖MIME类型（不同系统/浏览器报告的MIME类型不一致）
+        console.log('📁 文件信息:', { name: file.name, type: file.type, extension: fileExtension });
+    if (!validExtensions.includes(fileExtension)) {
       setError('只支持WAV、MP3、M4A格式的音频文件');
-      return;
-    }
-    
+    }    
     // 验证文件大小（50MB）
     if (file.size > 50 * 1024 * 1024) {
       setError('文件大小不能超过50MB');
