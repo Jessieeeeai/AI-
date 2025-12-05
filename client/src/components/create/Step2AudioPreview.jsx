@@ -143,7 +143,7 @@ const Step2AudioPreview = ({ data, setData, onNext, onPrev }) => {
     if (!file) return;
     
     // 验证文件类型
-    const validTypes = ['audio/wav', 'audio/mpeg', 'audio/mp4', 'audio/x-m4a'];
+    const validTypes = ['audio/wav', 'audio/mpeg', 'audio/mp4', 'audio/x-m4a', 'audio/m4a', 'audio/aac', 'audio/x-m4a'];
     const validExtensions = ['.wav', '.mp3', '.m4a'];
     const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
     
