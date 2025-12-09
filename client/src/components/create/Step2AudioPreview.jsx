@@ -162,10 +162,8 @@ const Step2AudioPreview = ({ data, setData, onNext, onPrev }) => {
     
     try {
       console.log('📤 上传声音文件:', file.name);
-      const formData = new FormData();
-      formData.append('audio', file);
       
-      const response = await uploadService.uploadVoice(formData);
+      const response = await uploadService.uploadVoice(file);
       
       console.log('✅ 声音上传成功:', response.voice);
       
