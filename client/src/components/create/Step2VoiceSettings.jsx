@@ -169,9 +169,9 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
                       <h2 className="text-2xl font-bold mb-2 flex items-center">
                                 <Mic className="w-6 h-6 mr-2 text-primary-purple" />
                                 调节声音
-                      </h2>h2>
-                      <p className="text-gray-600">调整语音参数，创建专属声音</p>p>
-              </div>div>
+                      </h2>
+                      <p className="text-gray-600">调整语音参数，创建专属声音</p>
+              </div>
         
           {/* 声音来源选择 */}
               <div className="grid md:grid-cols-2 gap-4">
@@ -184,9 +184,9 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
                                   }`}
                                 >
                                 <Mic className="w-8 h-8 mx-auto mb-2 text-primary-purple" />
-                                <div className="font-semibold">预设美女声音</div>div>
-                                <div className="text-sm text-gray-600 mt-1">使用AI生成的专业声音</div>div>
-                      </button>button>
+                                <div className="font-semibold">预设美女声音</div>
+                                <div className="text-sm text-gray-600 mt-1">使用AI生成的专业声音</div>
+                      </button>
               
                       <button
                                   onClick={() => setUseCustomVoice(true)}
@@ -197,12 +197,12 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
                                   }`}
                                 >
                                 <Upload className="w-8 h-8 mx-auto mb-2 text-primary-purple" />
-                                <div className="font-semibold">上传我的声音</div>div>
+                                <div className="font-semibold">上传我的声音</div>
                                 <div className="text-sm text-gray-600 mt-1">
-                                            使用自己的声音 <span className="text-primary-pink">(+20积分)</span>span>
-                                </div>div>
-                      </button>button>
-              </div>div>
+                                            使用自己的声音 <span className="text-primary-pink">(+20积分)</span>
+                                </div>
+                      </button>
+              </div>
         
           {useCustomVoice && (
                   <div className="space-y-4">
@@ -219,33 +219,33 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
                               {!uploadedVoice && !uploading && (
                                   <>
                                                   <Upload className="w-12 h-12 mx-auto mb-4 text-primary-purple" />
-                                                  <p className="font-semibold mb-2">上传你的声音文件</p>p>
+                                                  <p className="font-semibold mb-2">上传你的声音文件</p>
                                                   <p className="text-sm text-gray-600 mb-4">
                                                                     支持 MP3, WAV, M4A 格式 | 15-60秒 | 小于10MB
-                                                  </p>p>
+                                                  </p>
                                                   <button
                                                                       onClick={() => fileInputRef.current?.click()}
                                                                       className="px-6 py-2 bg-purple-100 text-primary-purple rounded-full font-semibold hover:bg-purple-200 transition-colors"
                                                                     >
                                                                     📤 选择文件上传
-                                                  </button>button>
-                                  </>>
+                                                  </button>
+                                  </>
                                 )}
                             
                               {uploading && (
                                   <>
                                                   <Loader className="w-12 h-12 mx-auto mb-4 text-primary-purple animate-spin" />
-                                                  <p className="font-semibold">上传中...</p>p>
-                                  </>>
+                                                  <p className="font-semibold">上传中...</p>
+                                  </>
                                 )}
                             
                               {uploadedVoice && (
                                   <>
                                                   <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
-                                                  <p className="font-semibold text-green-600 mb-2">上传成功！</p>p>
+                                                  <p className="font-semibold text-green-600 mb-2">上传成功！</p>
                                                   <p className="text-sm text-gray-600 mb-4">
                                                                     声音文件已上传，正在处理中
-                                                  </p>p>
+                                                  </p>
                                                   <button
                                                                       onClick={() => {
                                                                                             setUploadedVoice(null);
@@ -254,36 +254,36 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
                                                                       className="px-6 py-2 bg-red-100 text-red-600 rounded-full font-semibold hover:bg-red-200 transition-colors"
                                                                     >
                                                                     🗑️ 重新上传
-                                                  </button>button>
-                                  </>>
+                                                  </button>
+                                  </>
                                 )}
-                            </div>div>
+                            </div>
                   
                     {uploadError && (
                                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start space-x-2">
                                               <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                                              <p className="text-sm text-red-600">{uploadError}</p>p>
-                                </div>div>
+                                              <p className="text-sm text-red-600">{uploadError}</p>
+                                </div>
                             )}
                   
                     {/* 声音克隆要求 */}
                             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                                         <p className="text-sm text-blue-800">
-                                                      💡 <strong>声音克隆要求：</strong>strong>
-                                        </p>p>
+                                                      💡 <strong>声音克隆要求：</strong>
+                                        </p>
                                         <ul className="mt-2 space-y-1 text-sm text-blue-700">
-                                                      <li>• 录音环境安静，无背景噪音</li>li>
-                                                      <li>• 清晰朗读一段文字（15-60秒）</li>li>
-                                                      <li>• 音量适中，不要过大或过小</li>li>
-                                                      <li>• 声音质量越好，克隆效果越佳</li>li>
-                                        </ul>ul>
-                            </div>div>
-                  </div>div>
+                                                      <li>• 录音环境安静，无背景噪音</li>
+                                                      <li>• 清晰朗读一段文字（15-60秒）</li>
+                                                      <li>• 音量适中，不要过大或过小</li>
+                                                      <li>• 声音质量越好，克隆效果越佳</li>
+                                        </ul>
+                            </div>
+                  </div>
               )}
         
           {/* 语音参数调节 */}
               <div className="space-y-4">
-                      <h3 className="font-semibold text-lg">语音参数</h3>h3>
+                      <h3 className="font-semibold text-lg">语音参数</h3>
               
                 {/* 情绪参数 */}
                       <div className="space-y-3">
@@ -291,11 +291,11 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
                                             <div className="flex items-center justify-between mb-2">
                                                           <label className="text-sm font-medium flex items-center">
                                                                           😊 快乐度
-                                                          </label>label>
+                                                          </label>
                                                           <span className="text-sm font-semibold text-primary-purple">
                                                             {Math.round(settings.happiness * 100)}%
-                                                          </span>span>
-                                            </div>div>
+                                                          </span>
+                                            </div>
                                             <input
                                                             type="range"
                                                             min="0"
@@ -305,17 +305,17 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
                                                             onChange={(e) => updateSetting('happiness', parseFloat(e.target.value))}
                                                             className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer accent-primary-purple"
                                                           />
-                                </div>div>
+                                </div>
                       
                                 <div>
                                             <div className="flex items-center justify-between mb-2">
                                                           <label className="text-sm font-medium flex items-center">
                                                                           😢 悲伤度
-                                                          </label>label>
+                                                          </label>
                                                           <span className="text-sm font-semibold text-primary-purple">
                                                             {Math.round(settings.sadness * 100)}%
-                                                          </span>span>
-                                            </div>div>
+                                                          </span>
+                                            </div>
                                             <input
                                                             type="range"
                                                             min="0"
@@ -325,17 +325,17 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
                                                             onChange={(e) => updateSetting('sadness', parseFloat(e.target.value))}
                                                             className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer accent-primary-purple"
                                                           />
-                                </div>div>
+                                </div>
                       
                                 <div>
                                             <div className="flex items-center justify-between mb-2">
                                                           <label className="text-sm font-medium flex items-center">
                                                                           😠 愤怒度
-                                                          </label>label>
+                                                          </label>
                                                           <span className="text-sm font-semibold text-primary-purple">
                                                             {Math.round(settings.anger * 100)}%
-                                                          </span>span>
-                                            </div>div>
+                                                          </span>
+                                            </div>
                                             <input
                                                             type="range"
                                                             min="0"
@@ -345,17 +345,17 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
                                                             onChange={(e) => updateSetting('anger', parseFloat(e.target.value))}
                                                             className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer accent-primary-purple"
                                                           />
-                                </div>div>
+                                </div>
                       
                                 <div>
                                             <div className="flex items-center justify-between mb-2">
                                                           <label className="text-sm font-medium flex items-center">
                                                                           😮 惊讶度
-                                                          </label>label>
+                                                          </label>
                                                           <span className="text-sm font-semibold text-primary-purple">
                                                             {Math.round(settings.surprise * 100)}%
-                                                          </span>span>
-                                            </div>div>
+                                                          </span>
+                                            </div>
                                             <input
                                                             type="range"
                                                             min="0"
@@ -365,8 +365,8 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
                                                             onChange={(e) => updateSetting('surprise', parseFloat(e.target.value))}
                                                             className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer accent-primary-purple"
                                                           />
-                                </div>div>
-                      </div>div>
+                                </div>
+                      </div>
               
                 {/* 其他参数 */}
                       <div className="space-y-3 pt-4 border-t border-purple-200">
@@ -374,11 +374,11 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
                                             <div className="flex items-center justify-between mb-2">
                                                           <label className="text-sm font-medium flex items-center">
                                                                           <Music className="w-4 h-4 mr-1" /> 音调
-                                                          </label>label>
+                                                          </label>
                                                           <span className="text-sm font-semibold text-primary-purple">
                                                             {settings.pitch.toFixed(1)}x
-                                                          </span>span>
-                                            </div>div>
+                                                          </span>
+                                            </div>
                                             <input
                                                             type="range"
                                                             min="0.5"
@@ -388,17 +388,17 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
                                                             onChange={(e) => updateSetting('pitch', parseFloat(e.target.value))}
                                                             className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer accent-primary-purple"
                                                           />
-                                </div>div>
+                                </div>
                       
                                 <div>
                                             <div className="flex items-center justify-between mb-2">
                                                           <label className="text-sm font-medium flex items-center">
                                                                           <Gauge className="w-4 h-4 mr-1" /> 语速
-                                                          </label>label>
+                                                          </label>
                                                           <span className="text-sm font-semibold text-primary-purple">
                                                             {settings.speed.toFixed(1)}x
-                                                          </span>span>
-                                            </div>div>
+                                                          </span>
+                                            </div>
                                             <input
                                                             type="range"
                                                             min="0.5"
@@ -408,17 +408,17 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
                                                             onChange={(e) => updateSetting('speed', parseFloat(e.target.value))}
                                                             className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer accent-primary-purple"
                                                           />
-                                </div>div>
+                                </div>
                       
                                 <div>
                                             <div className="flex items-center justify-between mb-2">
                                                           <label className="text-sm font-medium flex items-center">
                                                                           <Volume2 className="w-4 h-4 mr-1" /> 音量
-                                                          </label>label>
+                                                          </label>
                                                           <span className="text-sm font-semibold text-primary-purple">
                                                             {Math.round(settings.volume * 100)}%
-                                                          </span>span>
-                                            </div>div>
+                                                          </span>
+                                            </div>
                                             <input
                                                             type="range"
                                                             min="0.5"
@@ -428,9 +428,9 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
                                                             onChange={(e) => updateSetting('volume', parseFloat(e.target.value))}
                                                             className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer accent-primary-purple"
                                                           />
-                                </div>div>
-                      </div>div>
-              </div>div>
+                                </div>
+                      </div>
+              </div>
         
           {/* 试听按钮 */}
               <div className="space-y-2">
@@ -443,27 +443,27 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
                                               }`}
                                             >
                                   {isPreviewing ? '🔊 播放中...' : '🎧 试听'}
-                                </button>button>
+                                </button>
                                 <button
                                               onClick={handleReset}
                                               className="px-6 py-2 bg-white rounded-full text-primary-purple font-semibold hover:shadow-md transition-all"
                                             >
                                             🔄 重置
-                                </button>button>
-                      </div>div>
+                                </button>
+                      </div>
                       
                 {/* 试听提示 - 修复：统一提示使用AI声音 */}
                       <div className="text-center text-sm text-gray-600">
                                 <div className="space-y-1">
-                                            <p>✨ 试听将使用AI声音朗读测试文本</p>p>
+                                            <p>✨ 试听将使用AI声音朗读测试文本</p>
                                             <p className="text-xs text-gray-500">
                                               {data.text && data.text.trim().length > 0
                                                                 ? `（使用您输入的文本前100字）`
                                                                 : `（使用默认测试文本）`}
-                                            </p>p>
-                                </div>div>
-                      </div>div>
-              </div>div>
+                                            </p>
+                                </div>
+                      </div>
+              </div>
         
           {/* 导航按钮 */}
               <div className="flex justify-between pt-4">
@@ -472,14 +472,14 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
                                   className="px-8 py-3 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition-colors"
                                 >
                                 ← 上一步
-                      </button>button>
+                      </button>
                       <button
                                   onClick={handleNext}
                                   className="btn-gradient px-8 py-3"
                                 >
                                 下一步 →
-                      </button>button>
-              </div>div>
-        </div>div>
+                      </button>
+              </div>
+        </div>
       );
 }</></></></div>
