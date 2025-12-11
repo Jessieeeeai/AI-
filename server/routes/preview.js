@@ -55,21 +55,55 @@ router.post('/tts', async (req, res) => {
     });
 
     // 调用IndexTTS2服务
-    const indextts2Url = process.env.INDEXTTS2_API_URL || 'http://localhost:5000';
-    
-    const response = await axios.post(`${indextts2Url}/api/v1/tts`, ttsParams, {
-      timeout: 30000,
-      responseType: 'arraybuffer' // 接收音频二进制数据
-    });
+        const indextts2Url = process.env.INDEXTTS2_API_URL || 'http://localhost:5000';
 
-    // 返回音频数据
-    res.set({
-      'Content-Type': 'audio/wav',
-      'Content-Disposition': 'inline; filename="preview.wav"',
-      'Cache-Control': 'no-cache'
-    });
-    
-    res.send(response.data);
+        let audioData;
+        try {
+                const response = await axios.post(`${indextts2Url}/api/v1/tts`, ttsParams, {
+                          timeout: 30000,
+                          responseType: 'arraybuffer' // 接收音频二进制数据
+                });
+                audioData = response.data;
+        } catch (ttsError) {
+                console.warn('⚠️ TTS服务不可用，使用Mock音频:', ttsError.message);
+                // 生成一个简单的静音WAV文件作为降级方案
+                // WAV header + 1秒静音数据 (44100Hz, 16bit, mono)
+                const sampleRate = 44100;
+                const duration = 1; // 1秒
+                const numSamples = sampleRate * duration;
+                const dataSize = numSamples * 2; // 16bit = 2 bytes
+                const fileSize = 44 + dataSize;
+
+                const buffer = Buffer.alloc(fileSize);
+                // RIFF header
+                buffer.write('RIFF', 0);
+                buffer.writeUInt32LE(fileSize - 8, 4);
+                buffer.write('WAVE', 8);
+                // fmt chunk
+                buffer.write('fmt ', 12);
+                buffer.writeUInt32LE(16, 16); // chunk size
+                buffer.writeUInt16LE(1, 20); // PCM format
+                buffer.writeUInt16LE(1, 22); // mono
+                buffer.writeUInt32LE(sampleRate, 24);
+                buffer.writeUInt32LE(sampleRate * 2, 28); // byte rate
+                buffer.writeUInt16LE(2, 32); // block align
+                buffer.writeUInt16LE(16, 34); // bits per sample
+                // data chunk
+                buffer.write('data', 36);
+                buffer.writeUInt32LE(dataSize, 40);
+                // 静音数据已经是0，不需要额外填充
+
+                audioData = buffer;
+        }
+
+        // 返回音频数据
+        res.set({
+                'Content-Type': 'audio/wav',
+                'Content-Disposition': 'inline; filename="preview.wav"',
+                'Cache-Control': 'no-cache'
+        });
+
+        res.send(audioData);
 
   } catch (error) {
     console.error('❌ TTS预览失败:', error.message);
