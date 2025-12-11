@@ -141,8 +141,8 @@ export const uploadVoice = async (req, res) => {
         voiceId: voiceId,  // 兼容前端
         audioUrl: audioUrl,
         status: 'processing',
-        duration: 0
-      },
+        duration: 0,
+              createdAt: new Date().toISOString()},
       message: '音频上传成功，正在处理中'
     });
 
