@@ -459,6 +459,7 @@ const Step2AudioPreview = ({ data, setData, onNext, onPrev }) => {
           <div className="text-center py-8">
             <p className="text-gray-500 mb-4">还未生成试听音频</p>
             <button
+                              type="button"
               onClick={handleGeneratePreview}
               disabled={isGenerating}
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 transition-all"
@@ -488,6 +489,7 @@ const Step2AudioPreview = ({ data, setData, onNext, onPrev }) => {
             <div className="flex gap-3">
               <button
                 onClick={handleGeneratePreview}
+                                type="button"
                 disabled={isGenerating}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-white transition-colors flex items-center gap-2"
               >
