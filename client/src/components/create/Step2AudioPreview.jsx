@@ -58,6 +58,7 @@ const Step2AudioPreview = ({ data, setData, onNext, onPrev }) => {
   
   // 生成试听音频
   const handleGeneratePreview = async () => {
+        console.log('🔵 handleGeneratePreview被调用', { isGenerating });
     setIsGenerating(true);
     setError('');
     
