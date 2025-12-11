@@ -59,6 +59,7 @@ const Step2AudioPreview = ({ data, setData, onNext, onPrev }) => {
   // 生成试听音频
   const handleGeneratePreview = async () => {
         console.log('🔵 handleGeneratePreview被调用', { isGenerating });
+        console.log('🔵 当前状态:', { voiceType, selectedSystemVoice, customVoiceId, previewText: previewText?.substring(0, 20) });
     setIsGenerating(true);
     setError('');
     
@@ -68,6 +69,7 @@ const Step2AudioPreview = ({ data, setData, onNext, onPrev }) => {
         customVoiceId;
       
       if (!voiceId) {
+              console.warn('⚠️ voiceId为空，跳过生成', { voiceType, customVoiceId, selectedSystemVoice });
         setError('请选择声音');
         setIsGenerating(false);
         return;
