@@ -205,7 +205,6 @@ export default function DashboardPage() {
           <div className="text-center py-20">
             <div className="text-6xl mb-4">📹</div>
             <p className="text-xl text-gray-600 mb-4">还没有作品</p>
-            <button
               onClick={() => navigate('/create')}
               className="btn-gradient px-8 py-3"
             >
