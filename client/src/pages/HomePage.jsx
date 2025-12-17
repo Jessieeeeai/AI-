@@ -50,13 +50,13 @@ export default function HomePage() {
                                                   <h1 className="text-4xl md:text-5xl font-bold mb-6">
                                                               <span className="bg-gradient-to-r from-primary-purple to-purple-400 bg-clip-text text-transparent">
                                                                             AI驱动的
-                                                              </span>span>
+                                                              </span>
                                                               <br />
                                                               专业口播视频生成平台
-                                                  </h1>h1>
+                                                  </h1>
                                                   <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
                                                               输入文字，选择形象，一键生成专业口播视频。支持真人对口型、智能配音、多语言翻译。
-                                                  </p>p>
+                                                  </p>
                                                   
                                                   <div className="relative inline-block" ref={menuRef}>
                                                               <button
@@ -65,7 +65,7 @@ export default function HomePage() {
                                                                                     >
                                                                             开始创作
                                                                             <ChevronDown className={`w-5 h-5 transition-transform ${showCreateMenu ? 'rotate-180' : ''}`} />
-                                                              </button>button>
+                                                              </button>
                                                               
                                                               <AnimatePresence>
                                                                         {showCreateMenu && (
@@ -83,11 +83,11 @@ export default function HomePage() {
                                                                                                                           <div className="flex items-center gap-3">
                                                                                                                                                 <Sparkles className="w-5 h-5 text-primary-purple" />
                                                                                                                                                 <div className="text-left">
-                                                                                                                                                                        <div className="font-semibold text-gray-900">引导式创作</div>div>
-                                                                                                                                                                        <div className="text-sm text-gray-500">一步步完成视频创建</div>div>
-                                                                                                                                                          </div>div>
-                                                                                                                                    </div>div>
-                                                                                                                </Link>Link>
+                                                                                                                                                                        <div className="font-semibold text-gray-900">引导式创作</div>
+                                                                                                                                                                        <div className="text-sm text-gray-500">一步步完成视频创建</div>
+                                                                                                                                                          </div>
+                                                                                                                                    </div>
+                                                                                                                </Link>
                                                                                                       <Link
                                                                                                                                     to="/create"
                                                                                                                                     className="block px-6 py-4 hover:bg-purple-50 transition-colors"
@@ -96,20 +96,20 @@ export default function HomePage() {
                                                                                                                           <div className="flex items-center gap-3">
                                                                                                                                                 <Zap className="w-5 h-5 text-primary-purple" />
                                                                                                                                                 <div className="text-left">
-                                                                                                                                                                        <div className="font-semibold text-gray-900">快速创建</div>div>
-                                                                                                                                                                        <div className="text-sm text-gray-500">直接进入创作界面</div>div>
-                                                                                                                                                          </div>div>
-                                                                                                                                    </div>div>
-                                                                                                                </Link>Link>
-                                                                                              </motion.div>motion.div>
+                                                                                                                                                                        <div className="font-semibold text-gray-900">快速创建</div>
+                                                                                                                                                                        <div className="text-sm text-gray-500">直接进入创作界面</div>
+                                                                                                                                                          </div>
+                                                                                                                                    </div>
+                                                                                                                </Link>
+                                                                                              </motion.div>
                                                                                   )}
-                                                              </AnimatePresence>AnimatePresence>
-                                                  </div>div>
-                                        </motion.div>motion.div>
-                                </section>section>
+                                                              </AnimatePresence>
+                                                  </div>
+                                        </motion.div>
+                                </section>
                           
                                 <section className="mb-20">
-                                        <h2 className="text-3xl font-bold text-center mb-12">核心功能</h2>h2>
+                                        <h2 className="text-3xl font-bold text-center mb-12">核心功能</h2>
                                         <div className="grid md:grid-cols-3 gap-8">
                                                   {features.map((feature, index) => (
                                                 <motion.div
@@ -121,61 +121,61 @@ export default function HomePage() {
                                                                       >
                                                               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
                                                                               <feature.icon className="w-6 h-6 text-primary-purple" />
-                                                              </div>div>
-                                                              <h3 className="font-bold mb-2">{feature.title}</h3>h3>
-                                                              <p className="text-sm text-gray-600">{feature.desc}</p>p>
-                                                </motion.div>motion.div>
+                                                              </div>
+                                                              <h3 className="font-bold mb-2">{feature.title}</h3>
+                                                              <p className="text-sm text-gray-600">{feature.desc}</p>
+                                                </motion.div>
                                               ))}
-                                        </div>div>
-                                </section>section>
+                                        </div>
+                                </section>
                           
                                 <section className="mb-20">
-                                        <h2 className="text-3xl font-bold text-center mb-12">应用场景</h2>h2>
+                                        <h2 className="text-3xl font-bold text-center mb-12">应用场景</h2>
                                         <div className="grid md:grid-cols-4 gap-6">
                                                   {useCases.map((useCase, index) => (
                                                 <div key={index} className="glass-card p-6 hover:shadow-md transition-shadow">
                                                               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
                                                                               <Check className="w-6 h-6 text-primary-purple" />
-                                                              </div>div>
-                                                              <h3 className="font-bold mb-2">{useCase.title}</h3>h3>
-                                                              <p className="text-sm text-gray-600">{useCase.desc}</p>p>
-                                                </div>div>
+                                                              </div>
+                                                              <h3 className="font-bold mb-2">{useCase.title}</h3>
+                                                              <p className="text-sm text-gray-600">{useCase.desc}</p>
+                                                </div>
                                               ))}
-                                        </div>div>
-                                </section>section>
+                                        </div>
+                                </section>
                           
                                 <section className="mb-20">
-                                        <h2 className="text-3xl font-bold text-center mb-4">透明定价</h2>h2>
-                                        <p className="text-gray-600 text-center mb-12">1分钟视频 = 30积分 = $3 | 1积分 = $0.1</p>p>
+                                        <h2 className="text-3xl font-bold text-center mb-4">透明定价</h2>
+                                        <p className="text-gray-600 text-center mb-12">1分钟视频 = 30积分 = $3 | 1积分 = $0.1</p>
                                         <div className="grid md:grid-cols-4 gap-6">
                                                   {pricingPlans.map((plan, index) => (
                                                 <div key={index} className={`glass-card p-6 text-center relative ${plan.popular ? 'ring-2 ring-primary-purple shadow-glow' : ''}`}>
                                                           {plan.popular && (
                                                                           <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                                                                                            <span className="bg-gradient-button text-white px-4 py-1 rounded-full text-sm font-semibold">🔥 最划算</span>span>
-                                                                          </div>div>
+                                                                                            <span className="bg-gradient-button text-white px-4 py-1 rounded-full text-sm font-semibold">🔥 最划算</span>
+                                                                          </div>
                                                               )}
-                                                              <div className="text-3xl font-bold mb-2">${plan.amount}</div>div>
-                                                              <div className="text-primary-purple font-bold text-2xl mb-2">{plan.credits}积分</div>div>
-                                                          {plan.bonus && <div className="text-sm text-green-600 font-semibold mb-4">+{plan.bonus}积分赠送</div>div>}
-                                                              <Link to="/recharge" className="block w-full py-2 px-4 rounded-full bg-purple-100 text-primary-purple font-semibold hover:bg-purple-200 transition-colors">选择</Link>Link>
-                                                </div>div>
+                                                              <div className="text-3xl font-bold mb-2">${plan.amount}</div>
+                                                              <div className="text-primary-purple font-bold text-2xl mb-2">{plan.credits}积分</div>
+                                                          {plan.bonus && <div className="text-sm text-green-600 font-semibold mb-4">+{plan.bonus}积分赠送</div>}
+                                                              <Link to="/recharge" className="block w-full py-2 px-4 rounded-full bg-purple-100 text-primary-purple font-semibold hover:bg-purple-200 transition-colors">选择</Link>
+                                                </div>
                                               ))}
-                                        </div>div>
-                                </section>section>
+                                        </div>
+                                </section>
                           
                                 <section className="glass-card p-12 text-center">
-                                        <h2 className="text-3xl font-bold mb-4">准备好开始了吗?</h2>h2>
-                                        <p className="text-gray-600 mb-8">注册即送20积分，免费生成1分钟专业口播视频</p>p>
+                                        <h2 className="text-3xl font-bold mb-4">准备好开始了吗?</h2>
+                                        <p className="text-gray-600 mb-8">注册即送20积分，免费生成1分钟专业口播视频</p>
                                           {isAuthenticated ? (
                                               <div className="inline-flex gap-4">
-                                                          <Link to="/create-wizard" className="btn-gradient px-8 py-4 text-lg inline-flex items-center gap-2">引导式创作<ArrowRight className="w-5 h-5" /></Link>Link>
-                                                          <Link to="/create" className="px-8 py-4 text-lg rounded-full glass-card hover:shadow-md transition-all font-semibold text-primary-purple inline-flex items-center gap-2">快速创建<ArrowRight className="w-5 h-5" /></Link>Link>
-                                              </div>div>
+                                                          <Link to="/create-wizard" className="btn-gradient px-8 py-4 text-lg inline-flex items-center gap-2">引导式创作<ArrowRight className="w-5 h-5" /></Link>
+                                                          <Link to="/create" className="px-8 py-4 text-lg rounded-full glass-card hover:shadow-md transition-all font-semibold text-primary-purple inline-flex items-center gap-2">快速创建<ArrowRight className="w-5 h-5" /></Link>
+                                              </div>
                                             ) : (
-                                              <Link to="/register" className="btn-gradient px-8 py-4 text-lg inline-block">立即开始<ArrowRight className="inline-block w-5 h-5 ml-2" /></Link>Link>
+                                              <Link to="/register" className="btn-gradient px-8 py-4 text-lg inline-block">立即开始<ArrowRight className="inline-block w-5 h-5 ml-2" /></Link>
                                         )}
-                                </section>section>
-                          </div>div>
+                                </section>
+                          </div>
                         );
 }</div>
