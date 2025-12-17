@@ -3,27 +3,30 @@ import { Video, Play, Upload, Loader, CheckCircle, XCircle, Trash2 } from 'lucid
 import { uploadService } from '../../services/api';
 
 export default function Step3TemplateSelect({ data, updateData, onNext, onPrev }) {
-  const [selectedTemplate, setSelectedTemplate] = useState(data.templateId || 'template_1');
+  const [selectedTemplate, setSelectedTemplate] = useState(data.templateId || 'dapiaoliang_1');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [uploadedTemplate, setUploadedTemplate] = useState(null);
   const [userTemplates, setUserTemplates] = useState([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
-  const fileInputRef = useRef(null);
+    const fileInputRef = useRef(null);
+  // 大漂亮的视频模板 (存储在Cloudflare R2)
+    const R2_BASE_URL = 'https://pub-7e2c78d85f9642f68cb7d2794fc53473.r2.dev';
 
-  // 10个预设模板（你会上传实际的视频）
-  const templates = [
-    { id: 'template_1', name: '模板 1', thumbnail: '/public/templates/template_1_thumb.jpg' },
-    { id: 'template_2', name: '模板 2', thumbnail: '/public/templates/template_2_thumb.jpg' },
-    { id: 'template_3', name: '模板 3', thumbnail: '/public/templates/template_3_thumb.jpg' },
-    { id: 'template_4', name: '模板 4', thumbnail: '/public/templates/template_4_thumb.jpg' },
-    { id: 'template_5', name: '模板 5', thumbnail: '/public/templates/template_5_thumb.jpg' },
-    { id: 'template_6', name: '模板 6', thumbnail: '/public/templates/template_6_thumb.jpg' },
-    { id: 'template_7', name: '模板 7', thumbnail: '/public/templates/template_7_thumb.jpg' },
-    { id: 'template_8', name: '模板 8', thumbnail: '/public/templates/template_8_thumb.jpg' },
-    { id: 'template_9', name: '模板 9', thumbnail: '/public/templates/template_9_thumb.jpg' },
-    { id: 'template_10', name: '模板 10', thumbnail: '/public/templates/template_10_thumb.jpg' },
-  ];
+    const templates = [
+      { 
+              id: 'dapiaoliang_1', 
+              name: '大漂亮视频 1', 
+              thumbnail: `${R2_BASE_URL}/一分钟样片.mp4`,
+              videoUrl: `${R2_BASE_URL}/一分钟样片.mp4`
+      },
+      { 
+              id: 'dapiaoliang_2', 
+              name: '大漂亮视频 2', 
+              thumbnail: `${R2_BASE_URL}/WanVideo2_2_I2V_00001_p84_fhsov_1765868805.mp4`,
+              videoUrl: `${R2_BASE_URL}/WanVideo2_2_I2V_00001_p84_fhsov_1765868805.mp4`
+      },
+        ];
 
   // 获取用户自定义模板列表
   useEffect(() => {
