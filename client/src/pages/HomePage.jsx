@@ -88,20 +88,6 @@ export default function HomePage() {
                                                                                                                                                           </div>
                                                                                                                                     </div>
                                                                                                                 </Link>
-                                                                                                      <Link
-                                                                                                                                    to="/create"
-                                                                                                                                    className="block px-6 py-4 hover:bg-purple-50 transition-colors"
-                                                                                                                                    onClick={() => setShowCreateMenu(false)}
-                                                                                                                                  >
-                                                                                                                          <div className="flex items-center gap-3">
-                                                                                                                                                <Zap className="w-5 h-5 text-primary-purple" />
-                                                                                                                                                <div className="text-left">
-                                                                                                                                                                        <div className="font-semibold text-gray-900">快速创建</div>
-                                                                                                                                                                        <div className="text-sm text-gray-500">直接进入创作界面</div>
-                                                                                                                                                          </div>
-                                                                                                                                    </div>
-                                                                                                                </Link>
-                                                                                              </motion.div>
                                                                                   )}
                                                               </AnimatePresence>
                                                   </div>
@@ -170,7 +156,6 @@ export default function HomePage() {
                                           {isAuthenticated ? (
                                               <div className="inline-flex gap-4">
                                                           <Link to="/create-wizard" className="btn-gradient px-8 py-4 text-lg inline-flex items-center gap-2">引导式创作<ArrowRight className="w-5 h-5" /></Link>
-                                                          <Link to="/create" className="px-8 py-4 text-lg rounded-full glass-card hover:shadow-md transition-all font-semibold text-primary-purple inline-flex items-center gap-2">快速创建<ArrowRight className="w-5 h-5" /></Link>
                                               </div>
                                             ) : (
                                               <Link to="/register" className="btn-gradient px-8 py-4 text-lg inline-block">立即开始<ArrowRight className="inline-block w-5 h-5 ml-2" /></Link>
