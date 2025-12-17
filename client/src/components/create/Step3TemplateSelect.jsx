@@ -142,10 +142,19 @@ export default function Step3TemplateSelect({ data, updateData, onNext, onPrev }
               }`}
             >
               {/* 缩略图占位符 */}
-              <div className="aspect-[3/4] bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                <Video className="w-12 h-12 text-primary-purple/50" />
-              </div>
-              
+                                    <div className="aspect-[3/4] bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center overflow-hidden">
+                                      {template.videoUrl ? (
+                                        <video 
+                                                                      src={template.videoUrl} 
+                                          className="w-full h-full object-cover"
+                                                                      muted
+                                                                      playsInline
+                                                                      onMouseOver={(e) => e.target.play()}
+                                                                      onMouseOut={(e) => { e.target.pause(); e.target.currentTime = 0; }}
+                                                                    />
+                                      ) : (
+                                        <Video className="w-12 h-12 text-primary-purple/50" />
+                                      )}
               {/* 播放按钮悬浮 */}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
                 <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
