@@ -34,9 +34,10 @@ router.post('/tts', async (req, res) => {
     // 准备TTS参数
     const ttsParams = {
       text: text.trim(),
-      voiceId: voiceId || 'default',
-      emoVector: [
-        voiceSettings?.emotions?.happiness || 0.7,
+      voiceId: voiceId || 'dapiaoliang',
+            // 大漂亮的声音 - 使用预设的参考音频进行声音克隆
+      referenceAudio: voiceId === 'dapiaoliang' ? '/uploads/voices/样板声音1.m4a' : null,
+            emoVector: [voiceSettings?.emotions?.happiness || 0.7,
         voiceSettings?.emotions?.anger || 0.0,
         voiceSettings?.emotions?.sadness || 0.1,
         0.0, // afraid
