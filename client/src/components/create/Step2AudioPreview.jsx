@@ -4,7 +4,7 @@ import { Play, Pause, Upload, Volume2, Music, RefreshCw, ArrowRight, AlertCircle
 
 const Step2AudioPreview = ({ data, setData, onNext, onPrev }) => {
   const [voiceType, setVoiceType] = useState(data.voiceType || 'system');
-  const [selectedSystemVoice, setSelectedSystemVoice] = useState(data.systemVoiceId || 'male_magnetic');
+  const [selectedSystemVoice, setSelectedSystemVoice] = useState(data.systemVoiceId || 'dapiaoliang');
   const [customVoiceId, setCustomVoiceId] = useState(data.customVoiceId || null);
   const [userVoices, setUserVoices] = useState([]);
   const [uploadingVoice, setUploadingVoice] = useState(false);
@@ -36,10 +36,7 @@ const Step2AudioPreview = ({ data, setData, onNext, onPrev }) => {
   
   // 系统预制声音列表
   const systemVoices = [
-    { id: 'male_magnetic', name: '男声-磁性', description: '低沉有磁性，适合严肃内容' },
-    { id: 'female_sweet', name: '女声-甜美', description: '温柔可爱，适合轻松内容' },
-    { id: 'male_steady', name: '男声-沉稳', description: '成熟稳重，适合商务内容' },
-    { id: 'female_energetic', name: '女声-活力', description: '青春活泼，适合时尚内容' }
+    { id: 'dapiaoliang', name: '大漂亮的声音', description: '专属定制声音，自然亲切' }
   ];
   
   // 加载用户上传的声音列表
