@@ -88,7 +88,7 @@ export default function HomePage() {
                                                                                                                                                           </div>
                                                                                                                                     </div>
                                                                                                                 </Link>
-                                                                                  )}
+                                                                                    </motion.div>                                                          )}
                                                               </AnimatePresence>
                                                   </div>
                                         </motion.div>
