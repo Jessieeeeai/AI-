@@ -295,4 +295,4 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                     );
 };
 
-export default Step1ScriptOptimization;</></></></div>
+export default Step1ScriptOptimization;
