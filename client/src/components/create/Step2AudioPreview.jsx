@@ -261,11 +261,11 @@ const Step2AudioPreview = ({ data, setData, onNext, onPrev }) => {
                                                                         <div className="flex items-center gap-2">
                                                                               {segment.status === 'ready' && segment.audioUrl && (
                                                                   <button type="button" onClick={() => currentPlayingSegment === segment.id ? stopAudio() : playSegmentAudio(segment.id, segment.audioUrl)} className={'flex items-center gap-1 px-3 py-1.5 rounded-lg transition-colors ' + (currentPlayingSegment === segment.id ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200')}>
-                                                                        {currentPlayingSegment === segment.id ? <><Pause className="w-4 h-4" />暂停</>> : <><Play className="w-4 h-4" />播放</>>}
+                                                                        {currentPlayingSegment === segment.id ? <><Pause className="w-4 h-4" />暂停</> : <><Play className="w-4 h-4" />播放</>}
                                                                   </button>
                                                                                             )}
                                                                                             <button type="button" onClick={() => handleGenerateSegmentAudio(segment.id)} disabled={segment.status === 'generating'} className="flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors disabled:bg-gray-100 disabled:text-gray-400">
-                                                                                                  {segment.status === 'generating' ? <><RefreshCw className="w-4 h-4 animate-spin" />生成中</>> : segment.status === 'ready' ? <><RotateCcw className="w-4 h-4" />重新生成</>> : <><Play className="w-4 h-4" />生成试听</>>}
+                                                                                                  {segment.status === 'generating' ? <><RefreshCw className="w-4 h-4 animate-spin" />生成中</> : segment.status === 'ready' ? <><RotateCcw className="w-4 h-4" />重新生成</> : <><Play className="w-4 h-4" />生成试听</>}
                                                                                                   </button>
                                                                         </div>
                                                       </div>
