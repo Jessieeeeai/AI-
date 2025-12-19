@@ -141,7 +141,7 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
             return (
                           <div className="max-w-7xl mx-auto p-6">
                                 <div className="mb-6">
-                                        <h2 className="text-2xl font-bold text-gray-900 mb-2">📝 Step 1: 文案优化与智能分段</h2>h2>
+                                        <h2 className="text-2xl font-bold text-gray-900 mb-2">📝 Step 1: 文案优化与智能分段</h2>
                                         <p className="text-gray-600">粘贴您的原始文案，AI将自动优化并智能分段（约300字/段）</p>
                                 </div>
                           
