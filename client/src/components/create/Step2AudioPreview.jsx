@@ -298,4 +298,4 @@ const Step2AudioPreview = ({ data, setData, onNext, onPrev }) => {
                 );
 };
 
-export default Step2AudioPreview;</></></></></></span>
+export default Step2AudioPreview;
