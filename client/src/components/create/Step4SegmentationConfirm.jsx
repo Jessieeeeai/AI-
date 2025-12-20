@@ -1,430 +1,399 @@
-import { useState, useEffect } from 'react';
-import { segmentationService } from '../../services/api';
+import { useState, useRef, useEffect } from 'react';
+import { previewService } from '../../services/api';
 import { 
-  Scissors, 
-  AlertCircle, 
-  CheckCircle, 
-  Clock, 
-  Film, 
-  ArrowRight, 
-  ArrowLeft,
-  RefreshCw,
-  Info,
-  ChevronDown,
-  ChevronUp
+    Scissors, RefreshCw, ArrowRight, ArrowLeft, AlertCircle, CheckCircle, 
+    Play, Pause, Volume2, RotateCcw, Music
 } from 'lucide-react';
 
+// 智能分段函数
+const smartSegmentText = (text, targetLength = 300) => {
+    if (!text || text.length === 0) return [];
+
+    const segments = [];
+    let currentPosition = 0;
+
+    while (currentPosition < text.length) {
+          let endPosition = Math.min(currentPosition + targetLength, text.length);
+
+          if (endPosition < text.length) {
+                  const searchStart = Math.max(currentPosition, endPosition - 100);
+                  const searchEnd = Math.min(text.length, endPosition + 50);
+                  const searchText = text.substring(searchStart, searchEnd);
+
+                  const punctuations = ['。', '！', '？', '；', '.', '!', '?', ';', '\n'];
+                  let bestBreakPoint = -1;
+                  let minDistance = Infinity;
+
+                  for (const punct of punctuations) {
+                            let idx = searchText.lastIndexOf(punct);
+                            if (idx !== -1) {
+                                        const absolutePos = searchStart + idx + 1;
+                                        const distance = Math.abs(absolutePos - (currentPosition + targetLength));
+                                        if (distance < minDistance && absolutePos > currentPosition + 50) {
+                                                      minDistance = distance;
+                                                      bestBreakPoint = absolutePos;
+                                        }
+                            }
+                  }
+
+                  if (bestBreakPoint !== -1) {
+                            endPosition = bestBreakPoint;
+                  }
+          }
+
+          const segment = text.substring(currentPosition, endPosition).trim();
+          if (segment.length > 0) {
+                  segments.push({
+                            id: segments.length + 1,
+                            text: segment,
+                            status: 'pending',
+                            audioUrl: null,
+                            audioBlob: null
+                  });
+          }
+
+          currentPosition = endPosition;
+    }
+
+    return segments;
+};
+
 const Step4SegmentationConfirm = ({ data, setData, onNext, onPrev }) => {
-  const [segmentationResult, setSegmentationResult] = useState(null);
-  const [selectedStrategy, setSelectedStrategy] = useState(data.segmentationStrategy || 'auto');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [error, setError] = useState('');
-  const [expandedSegments, setExpandedSegments] = useState(new Set([0])); // 默认展开第一段
-  const [costEstimate, setCostEstimate] = useState(null);
+    const [segments, setSegments] = useState(data.segments || []);
+    const [isSegmenting, setIsSegmenting] = useState(false);
+    const [currentPlayingSegment, setCurrentPlayingSegment] = useState(null);
+    const [error, setError] = useState('');
+    const audioRef = useRef(null);
 
-  // 文本来源（优化后的文本）
-  const text = data.optimizedText || '';
+    // 初始化时自动分段
+    useEffect(() => {
+          if (data.optimizedText && segments.length === 0) {
+                  handleSegment();
+          }
+    }, []);
 
-  // 分段策略选项
-  const strategies = [
-    {
-      id: 'auto',
-      name: '自动选择',
-      description: '根据文本长度智能选择最佳策略',
-      icon: '🤖'
-    },
-    {
-      id: 'short',
-      name: '短分段',
-      description: '50-150字/段，快节奏内容',
-      icon: '⚡'
-    },
-    {
-      id: 'medium',
-      name: '中等分段',
-      description: '150-300字/段，常规内容',
-      icon: '📝'
-    },
-    {
-      id: 'long',
-      name: '长分段',
-      description: '300-500字/段，深度讲解',
-      icon: '📚'
-    }
-  ];
+    // 智能分段
+    const handleSegment = () => {
+          if (!data.optimizedText || data.optimizedText.trim().length < 10) {
+                  setError('请先完成文案优化');
+                  return;
+          }
 
-  // 初始加载时分析
-  useEffect(() => {
-    if (text) {
-      analyzeText();
-    }
-  }, []);
+          setIsSegmenting(true);
+          const newSegments = smartSegmentText(data.optimizedText);
+          setSegments(newSegments);
+          setData({ ...data, segments: newSegments });
+          setIsSegmenting(false);
+    };
 
-  // 分析文本分段
-  const analyzeText = async () => {
-    if (!text || text.trim().length === 0) {
-      setError('没有可分段的文本内容');
-      return;
-    }
+    // 生成单段语音
+    const handleGenerateSegmentAudio = async (segmentId) => {
+          const segment = segments.find(s => s.id === segmentId);
+          if (!segment) return;
 
-    setIsAnalyzing(true);
-    setError('');
+          const voiceId = data.voiceType === 'system' ? data.systemVoiceId : data.customVoiceId;
+          if (!voiceId) {
+                  setError('请先在上一步选择声音');
+                  return;
+          }
 
-    try {
-      // 分析分段
-      const response = await segmentationService.analyzeSegmentation(text, selectedStrategy);
-      
-      if (response.success) {
-        setSegmentationResult(response.data);
-        
-        // 获取费用估算
-        const costResponse = await segmentationService.estimateCost(text, selectedStrategy);
-        if (costResponse.success) {
-          setCostEstimate(costResponse.data);
-        }
-      } else {
-        setError(response.error || '分段分析失败');
-      }
-    } catch (err) {
-      console.error('分段分析错误:', err);
-      setError(err.message || '分段分析失败，请重试');
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
+          updateSegmentStatus(segmentId, 'generating');
+          setError('');
 
-  // 切换策略
-  const handleStrategyChange = async (strategyId) => {
-    setSelectedStrategy(strategyId);
-    // 重新分析
-    setIsAnalyzing(true);
-    try {
-      const response = await segmentationService.analyzeSegmentation(text, strategyId);
-      if (response.success) {
-        setSegmentationResult(response.data);
-        
-        const costResponse = await segmentationService.estimateCost(text, strategyId);
-        if (costResponse.success) {
-          setCostEstimate(costResponse.data);
-        }
-      }
-    } catch (err) {
-      setError(err.message || '切换策略失败');
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
+          try {
+                  const audioBlob = await previewService.generateTTS(segment.text, voiceId, data.voiceSettings);
+                  const audioUrl = URL.createObjectURL(audioBlob);
 
-  // 切换段落展开/收起
-  const toggleSegment = (index) => {
-    const newExpanded = new Set(expandedSegments);
-    if (newExpanded.has(index)) {
-      newExpanded.delete(index);
-    } else {
-      newExpanded.add(index);
-    }
-    setExpandedSegments(newExpanded);
-  };
+                  const updatedSegments = segments.map(s =>
+                            s.id === segmentId
+                                                                 ? { ...s, status: 'ready', audioUrl, audioBlob }
+                              : s
+                                                             );
+                  setSegments(updatedSegments);
+                  setData({ ...data, segments: updatedSegments });
 
-  // 全部展开/收起
-  const toggleAllSegments = () => {
-    if (expandedSegments.size === segmentationResult.segments.length) {
-      setExpandedSegments(new Set());
-    } else {
-      setExpandedSegments(new Set(segmentationResult.segments.map((_, i) => i)));
-    }
-  };
+                  // 自动播放生成的语音
+                  setTimeout(() => {
+                            playSegmentAudio(segmentId, audioUrl);
+                  }, 100);
+          } catch (err) {
+                  updateSegmentStatus(segmentId, 'error');
+                  setError('分段 ' + segmentId + ' 生成失败：' + (err.message || '未知错误'));
+          }
+    };
 
-  // 格式化时长
-  const formatDuration = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return mins > 0 ? `${mins}分${secs}秒` : `${secs}秒`;
-  };
+    // 更新分段状态
+    const updateSegmentStatus = (segmentId, status) => {
+          setSegments(segments.map(s =>
+                  s.id === segmentId ? { ...s, status } : s
+                                       ));
+    };
 
-  // 下一步
-  const handleNext = () => {
-    if (!segmentationResult) {
-      setError('请先分析文本分段');
-      return;
-    }
+    // 播放分段语音
+    const playSegmentAudio = (segmentId, audioUrl) => {
+          if (!audioRef.current) return;
 
-    // 保存分段信息
-    setData({
-      ...data,
-      segmentationStrategy: selectedStrategy,
-      segmentationResult: segmentationResult,
-      segments: segmentationResult.segments,
-      needsSegmentation: segmentationResult.needsSegmentation,
-      estimatedCost: costEstimate
-    });
+          audioRef.current.pause();
+          audioRef.current.src = audioUrl;
+          audioRef.current.volume = data.voiceSettings?.volume || 0.8;
+          audioRef.current.play();
+          setCurrentPlayingSegment(segmentId);
+    };
 
-    onNext();
-  };
+    // 停止播放
+    const stopAudio = () => {
+          if (!audioRef.current) return;
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+          setCurrentPlayingSegment(null);
+    };
 
-  if (isAnalyzing && !segmentationResult) {
+    // 一键生成所有分段语音
+    const handleGenerateAllSegments = async () => {
+          const voiceId = data.voiceType === 'system' ? data.systemVoiceId : data.customVoiceId;
+          if (!voiceId) {
+                  setError('请先在上一步选择声音');
+                  return;
+          }
+
+          setError('');
+
+          for (const segment of segments) {
+                  if (segment.status !== 'ready') {
+                            await handleGenerateSegmentAudio(segment.id);
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                  }
+          }
+    };
+
+    // 编辑分段内容
+    const handleSegmentEdit = (segmentId, newText) => {
+          const updatedSegments = segments.map(seg =>
+                  seg.id === segmentId
+                                                       ? { ...seg, text: newText, status: 'pending', audioUrl: null, audioBlob: null }
+                    : seg
+                                                   );
+          setSegments(updatedSegments);
+          setData({ ...data, segments: updatedSegments });
+    };
+
+    // 检查是否所有分段都已确认
+    const allSegmentsReady = segments.length > 0 && segments.every(s => s.status === 'ready');
+
+    // 下一步
+    const handleNext = () => {
+          if (!allSegmentsReady) {
+                  setError('请确保所有分段都已生成并试听确认');
+                  return;
+          }
+
+          setData({ ...data, segments });
+          onNext();
+    };
+
+    // 渲染状态标签
+    const renderStatusBadge = (status) => {
+          if (status === 'pending') {
+                  return <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">待生成</span>span>;
+          }
+          if (status === 'generating') {
+                  return (
+                            <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-600 flex items-center gap-1">
+                                      <RefreshCw className="w-3 h-3 animate-spin" />生成中
+                            </span>span>
+                          );
+          }
+          if (status === 'ready') {
+                  return (
+                            <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 flex items-center gap-1">
+                                      <CheckCircle className="w-3 h-3" />已确认
+                            </span>span>
+                          );
+          }
+          if (status === 'error') {
+                  return <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-600">生成失败</span>span>;
+          }
+          return null;
+    };
+  
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="flex flex-col items-center justify-center h-64">
-          <RefreshCw className="w-12 h-12 text-blue-600 animate-spin mb-4" />
-          <p className="text-gray-600">正在分析文本分段...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-6xl mx-auto p-6">
-      {/* 标题 */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          智能分段确认
-        </h2>
-        <p className="text-gray-600">
-          系统将根据文本长度自动分段，每段生成独立视频后自动合并
-        </p>
-      </div>
-
-      {/* 错误提示 */}
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-red-800">{error}</p>
-          </div>
-        </div>
-      )}
-
-      {/* 分段策略选择 */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-3">
-          选择分段策略
-        </label>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {strategies.map((strategy) => (
-            <button
-              key={strategy.id}
-              onClick={() => handleStrategyChange(strategy.id)}
-              disabled={isAnalyzing}
-              className={`p-4 rounded-lg border-2 text-left transition-all ${
-                selectedStrategy === strategy.id
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              } ${isAnalyzing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-            >
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">{strategy.icon}</span>
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900">{strategy.name}</div>
-                  <div className="text-sm text-gray-600 mt-1">{strategy.description}</div>
-                </div>
-                {selectedStrategy === strategy.id && (
-                  <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
+          <div className="max-w-7xl mx-auto p-6">
+                <div className="mb-6">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">✂️ Step 4: 智能分段与逐段试听</h2>h2>
+                        <p className="text-gray-600">系统已将文案按约300字智能分段，请逐段生成语音并试听确认</p>p>
+                </div>div>
+          
+            {error && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                              <div className="text-sm text-red-800">{error}</div>div>
+                    </div>div>
                 )}
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 分段结果 */}
-      {segmentationResult && (
-        <>
-          {/* 统计信息 */}
-          <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-1">
-                <Film className="w-4 h-4 text-blue-600" />
-                <span className="text-sm text-blue-600 font-medium">视频段数</span>
-              </div>
-              <div className="text-2xl font-bold text-blue-900">
-                {segmentationResult.totalSegments}
-              </div>
-            </div>
-
-            <div className="p-4 bg-green-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-1">
-                <Clock className="w-4 h-4 text-green-600" />
-                <span className="text-sm text-green-600 font-medium">总时长</span>
-              </div>
-              <div className="text-2xl font-bold text-green-900">
-                {formatDuration(segmentationResult.estimatedTotalDuration)}
-              </div>
-            </div>
-
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-1">
-                <Scissors className="w-4 h-4 text-purple-600" />
-                <span className="text-sm text-purple-600 font-medium">总字数</span>
-              </div>
-              <div className="text-2xl font-bold text-purple-900">
-                {segmentationResult.totalChars}
-              </div>
-            </div>
-
-            {costEstimate && (
-              <div className="p-4 bg-orange-50 rounded-lg">
-                <div className="flex items-center gap-2 mb-1">
-                  <Info className="w-4 h-4 text-orange-600" />
-                  <span className="text-sm text-orange-600 font-medium">预计积分</span>
-                </div>
-                <div className="text-2xl font-bold text-orange-900">
-                  {costEstimate.estimatedCredits}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 提示信息 */}
-          {segmentationResult.recommendations && segmentationResult.recommendations.length > 0 && (
-            <div className="mb-6 space-y-2">
-              {segmentationResult.recommendations.map((rec, index) => (
-                <div
-                  key={index}
-                  className={`p-3 rounded-lg flex items-start gap-3 ${
-                    rec.type === 'warning' 
-                      ? 'bg-yellow-50 border border-yellow-200' 
-                      : 'bg-blue-50 border border-blue-200'
-                  }`}
-                >
-                  <Info className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                    rec.type === 'warning' ? 'text-yellow-600' : 'text-blue-600'
-                  }`} />
-                  <p className={rec.type === 'warning' ? 'text-yellow-800' : 'text-blue-800'}>
-                    {rec.message}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* 分段列表 */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                分段预览（共{segmentationResult.segments.length}段）
-              </h3>
-              <button
-                onClick={toggleAllSegments}
-                className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
-              >
-                {expandedSegments.size === segmentationResult.segments.length ? (
-                  <>
-                    <ChevronUp className="w-4 h-4" />
-                    全部收起
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="w-4 h-4" />
-                    全部展开
-                  </>
+          
+            {/* 顶部操作栏 */}
+                <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-4">
+                                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                                              <Scissors className="w-5 h-5" />
+                                              分段列表
+                                              <span className="text-sm font-normal text-gray-500">（共 {segments.length} 段）</span>span>
+                                  </h3>h3>
+                                  <button
+                                                type="button"
+                                                onClick={handleSegment}
+                                                disabled={isSegmenting}
+                                                className="flex items-center gap-2 px-3 py-1.5 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm"
+                                              >
+                                              <RefreshCw className={`w-4 h-4 ${isSegmenting ? 'animate-spin' : ''}`} />
+                                              重新分段
+                                  </button>button>
+                        </div>div>
+                
+                        <button
+                                    type="button"
+                                    onClick={handleGenerateAllSegments}
+                                    disabled={segments.every(s => s.status === 'generating')}
+                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300"
+                                  >
+                                  <Music className="w-4 h-4" />
+                                  一键生成全部语音
+                        </button>button>
+                </div>div>
+          
+            {/* 隐藏的音频播放器 */}
+                <audio ref={audioRef} onEnded={() => setCurrentPlayingSegment(null)} className="hidden" />
+          
+            {/* 分段列表 */}
+            {segments.length === 0 ? (
+                    <div className="p-8 border-2 border-dashed border-gray-300 rounded-lg text-center text-gray-500">
+                              <Scissors className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                              <p>正在进行智能分段...</p>p>
+                    </div>div>
+                  ) : (
+                    <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                      {segments.map((segment, index) => (
+                                  <div
+                                                  key={segment.id}
+                                                  className={`p-4 border rounded-lg transition-colors ${
+                                                                    currentPlayingSegment === segment.id
+                                                                      ? 'border-blue-500 bg-blue-50'
+                                                                      : 'border-gray-200 bg-white hover:border-blue-300'
+                                                  }`}
+                                                >
+                                                <div className="flex items-center justify-between mb-3">
+                                                                <div className="flex items-center gap-3">
+                                                                                  <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 rounded-full text-sm font-semibold">
+                                                                                    {index + 1}
+                                                                                    </span>span>
+                                                                                  <span className="text-sm text-gray-500">第 {index + 1} 段 · {segment.text.length} 字</span>span>
+                                                                  {renderStatusBadge(segment.status)}
+                                                                </div>div>
+                                                
+                                                                <div className="flex items-center gap-2">
+                                                                  {segment.status === 'ready' && segment.audioUrl && (
+                                                                      <button
+                                                                                              type="button"
+                                                                                              onClick={() =>
+                                                                                                                        currentPlayingSegment === segment.id
+                                                                                                                          ? stopAudio()
+                                                                                                                          : playSegmentAudio(segment.id, segment.audioUrl)
+                                                                                                }
+                                                                                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg transition-colors ${
+                                                                                                                        currentPlayingSegment === segment.id
+                                                                                                                          ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                                                                                                                          : 'bg-green-100 text-green-600 hover:bg-green-200'
+                                                                                                }`}
+                                                                                            >
+                                                                        {currentPlayingSegment === segment.id ? (
+                                                                                                                      <><Pause className="w-4 h-4" />暂停</>>
+                                                                                                                    ) : (
+                                                                                                                      <><Play className="w-4 h-4" />播放</>>
+                                                                                                                    )}
+                                                                      </button>button>
+                                                                                  )}
+                                                                
+                                                                                  <button
+                                                                                                        type="button"
+                                                                                                        onClick={() => handleGenerateSegmentAudio(segment.id)}
+                                                                                                        disabled={segment.status === 'generating'}
+                                                                                                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors disabled:bg-gray-100 disabled:text-gray-400"
+                                                                                                      >
+                                                                                    {segment.status === 'generating' ? (
+                                                                                                                              <><RefreshCw className="w-4 h-4 animate-spin" />生成中</>>
+                                                                                                                            ) : segment.status === 'ready' ? (
+                                                                                                                              <><RotateCcw className="w-4 h-4" />重新生成</>>
+                                                                                                                            ) : (
+                                                                                                                              <><Volume2 className="w-4 h-4" />生成语音</>>
+                                                                                                                            )}
+                                                                                    </button>button>
+                                                                </div>div>
+                                                </div>div>
+                                  
+                                                <textarea
+                                                                  value={segment.text}
+                                                                  onChange={(e) => handleSegmentEdit(segment.id, e.target.value)}
+                                                                  className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                                                  rows={3}
+                                                                />
+                                  </div>div>
+                                ))}
+                    </div>div>
                 )}
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {segmentationResult.segments.map((segment, index) => (
-                <div
-                  key={index}
-                  className="border border-gray-200 rounded-lg overflow-hidden"
-                >
-                  <button
-                    onClick={() => toggleSegment(index)}
-                    className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-bold text-blue-600">{index + 1}</span>
-                      </div>
-                      <div className="text-left">
-                        <div className="font-medium text-gray-900">
-                          第{index + 1}段
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {segment.charCount}字 · 约{formatDuration(segment.estimatedDuration)}
-                        </div>
-                      </div>
-                    </div>
-                    {expandedSegments.has(index) ? (
-                      <ChevronUp className="w-5 h-5 text-gray-400" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
-                    )}
-                  </button>
-
-                  {expandedSegments.has(index) && (
-                    <div className="p-4 bg-gray-50 border-t border-gray-200">
-                      <div className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                        {segment.text}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 生成信息 */}
-          {costEstimate && (
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-3">生成信息</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-600">视频生成时间：</span>
-                  <span className="font-medium text-gray-900 ml-2">
-                    约{Math.ceil(costEstimate.estimatedGenerationTime / 60)}分钟
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-600">消耗积分：</span>
-                  <span className="font-medium text-gray-900 ml-2">
-                    {costEstimate.estimatedCredits}积分
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-600">最终效果：</span>
-                  <span className="font-medium text-gray-900 ml-2">
-                    {segmentationResult.needsSegmentation ? '自动合并为完整视频' : '单个视频'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* 导航按钮 */}
-      <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-        <button
-          onClick={onPrev}
-          className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          上一步
-        </button>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={analyzeText}
-            disabled={isAnalyzing}
-            className="px-6 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-2 disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 ${isAnalyzing ? 'animate-spin' : ''}`} />
-            重新分析
-          </button>
-
-          <button
-            onClick={handleNext}
-            disabled={!segmentationResult || isAnalyzing}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            确认分段
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+          
+            {/* 状态摘要 */}
+                <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-4">
+                                              <div className="text-sm">
+                                                            <span className="text-gray-600">已确认: </span>span>
+                                                            <span className="font-semibold text-green-600">{segments.filter(s => s.status === 'ready').length}</span>span>
+                                                            <span className="text-gray-600"> / {segments.length} 段</span>span>
+                                              </div>div>
+                                              <div className="text-sm">
+                                                            <span className="text-gray-600">总字数: </span>span>
+                                                            <span className="font-semibold text-blue-600">{segments.reduce((sum, s) => sum + s.text.length, 0)} 字</span>span>
+                                              </div>div>
+                                  </div>div>
+                          {allSegmentsReady && (
+                        <span className="flex items-center gap-2 text-green-600 font-semibold">
+                                      <CheckCircle className="w-5 h-5" />
+                                      全部确认完成！
+                        </span>span>
+                                  )}
+                        </div>div>
+                </div>div>
+          
+            {/* 提示信息 */}
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                                  💡 <strong>提示：</strong>strong>
+                                  点击每段右侧的"生成语音"按钮，逐段生成语音并试听。如果对某段效果不满意，可以编辑文字内容后重新生成。所有分段确认后，才能进入最终确认步骤。
+                        </p>p>
+                </div>div>
+          
+            {/* 底部导航 */}
+                <div className="flex justify-between pt-6">
+                        <button
+                                    type="button"
+                                    onClick={onPrev}
+                                    className="flex items-center gap-2 px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                  >
+                                  <ArrowLeft className="w-4 h-4" />
+                                  上一步
+                        </button>button>
+                
+                        <button
+                                    type="button"
+                                    onClick={handleNext}
+                                    disabled={!allSegmentsReady}
+                                    className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 disabled:from-gray-300 disabled:to-gray-300 transition-all"
+                                  >
+                                  下一步：确认生成视频
+                                  <ArrowRight className="w-4 h-4" />
+                        </button>button>
+                </div>div>
+          </div>div>
+        );
 };
 
 export default Step4SegmentationConfirm;
