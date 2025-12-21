@@ -7,6 +7,7 @@ import { ChevronRight, Sparkles } from 'lucide-react';
 import Step1ScriptOptimization from '../components/create/Step1ScriptOptimization';
 import Step2AudioPreview from '../components/create/Step2AudioPreview';
 import Step3TemplateSelect from '../components/create/Step3TemplateSelect';
+import Step5FinalConfirm from '../components/create/Step5FinalConfirm';
 /**
  * 优化后的创建向导
  * 
@@ -195,7 +196,7 @@ export default function CreateWizard() {
           )}
 
           {currentStep === 4 && (
-            <Step4FinalConfirm
+            <Step5FinalConfirm
               data={wizardData}
               setData={updateWizardData}
               onPrev={prevStep}
