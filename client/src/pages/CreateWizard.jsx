@@ -7,9 +7,6 @@ import { ChevronRight, Sparkles } from 'lucide-react';
 import Step1ScriptOptimization from '../components/create/Step1ScriptOptimization';
 import Step2AudioPreview from '../components/create/Step2AudioPreview';
 import Step3TemplateSelect from '../components/create/Step3TemplateSelect';
-import Step4SegmentationConfirm from '../components/create/Step4SegmentationConfirm';
-import Step5FinalConfirm from '../components/create/Step5FinalConfirm';
-
 /**
  * 优化后的创建向导
  * 
@@ -17,8 +14,7 @@ import Step5FinalConfirm from '../components/create/Step5FinalConfirm';
  * 1. AI文案优化 - 输入原文，AI优化为口播文案
  * 2. 试听预览 - 选择声音、调整参数、预览效果
  * 3. 视频模板 - 选择视频模板
- * 4. 智能分段 - 长文本自动分段
- * 5. 最终确认 - 确认所有设置和费用
+ * 4. 最终确认 - 确认所有设置和费用
  */
 export default function CreateWizard() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -75,7 +71,7 @@ export default function CreateWizard() {
   };
 
   const nextStep = () => {
-    if (currentStep < 5) {
+    if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -97,12 +93,11 @@ export default function CreateWizard() {
   };
 
   const steps = [
-    { number: 1, title: 'AI文案优化', icon: '✍️' },
-    { number: 2, title: '试听预览', icon: '🎵' },
-    { number: 3, title: '选择模板', icon: '🎬' },
-    { number: 4, title: '智能分段', icon: '✂️' },
-    { number: 5, title: '确认生成', icon: '✨' }
-  ];
+  { number: 1, title: 'AI文案优化', icon: '✏️' },
+  { number: 2, title: '试听预览', icon: '🎵' },
+  { number: 3, title: '选择模板', icon: '📋' },
+  { number: 4, title: '确认生成', icon: '✨' }
+];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 py-8">
@@ -200,16 +195,7 @@ export default function CreateWizard() {
           )}
 
           {currentStep === 4 && (
-            <Step4SegmentationConfirm
-              data={wizardData}
-              setData={updateWizardData}
-              onNext={nextStep}
-              onPrev={prevStep}
-            />
-          )}
-
-          {currentStep === 5 && (
-            <Step5FinalConfirm
+            <Step4FinalConfirm
               data={wizardData}
               setData={updateWizardData}
               onPrev={prevStep}
