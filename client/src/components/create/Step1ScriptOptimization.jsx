@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+243
+          import { useState, useRef, useEffect } from 'react';
 import { optimizeService, previewService } from '../../services/api';
 import { Sparkles, RefreshCw, ArrowRight, AlertCircle, CheckCircle, Scissors, Play, Pause, Volume2, RotateCcw, Music } from 'lucide-react';
 
@@ -242,24 +243,24 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
 
           const renderStatusBadge = (status) => {
                       if (status === 'pending') {
-                                    return <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">待生成</span>span>;
+                                    return <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">待生成</span>;
                       }
                       if (status === 'generating') {
                                     return (
                                                     <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-600 flex items-center gap-1">
                                                               <RefreshCw className="w-3 h-3 animate-spin" />生成中
-                                                    </span>span>
+                                                    </span>
                                                   );
                       }
                       if (status === 'ready') {
                                     return (
                                                     <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600 flex items-center gap-1">
                                                               <CheckCircle className="w-3 h-3" />已确认
-                                                    </span>span>
+                                                    </span>
                                                   );
                       }
                       if (status === 'error') {
-                                    return <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-600">生成失败</span>span>;
+                                    return <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-600">生成失败</span>;
                       }
                       return null;
           };
@@ -303,7 +304,7 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                     <div className="space-y-4">
                                               <div className="flex items-center justify-between">
                                                           <h3 className="text-lg font-semibold text-gray-900">📋 原始文案</h3>h3>
-                                                          <span className="text-sm text-gray-500">{originalText.length}/10000</span>span>
+                                                          <span className="text-sm text-gray-500">{originalText.length}/10000</span>
                                               </div>div>
                                               <textarea
                                                                   value={originalText}
@@ -330,12 +331,12 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                                                                                       <span className="flex items-center gap-2">
                                                                                                                         <RefreshCw className="w-4 h-4 animate-spin" />
                                                                                                                         正在优化...
-                                                                                                              </span>span>
+                                                                                                              </span>
                                                                                                     ) : (
                                                                                                       <span className="flex items-center gap-2">
                                                                                                                         <Sparkles className="w-4 h-4" />
                                                                                                                         AI优化文案
-                                                                                                              </span>span>
+                                                                                                              </span>
                                                                         )}
                                                           </button>button>
                                               </div>div>
@@ -344,7 +345,7 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                     <div className="space-y-4">
                                               <div className="flex items-center justify-between">
                                                           <h3 className="text-lg font-semibold text-gray-900">✨ 优化后口播稿</h3>h3>
-                                                      {optimizedText && <span className="text-sm text-gray-500">{optimizedText.length}/10000</span>span>}
+                                                      {optimizedText && <span className="text-sm text-gray-500">{optimizedText.length}/10000</span>}
                                               </div>div>
                                             {!optimizedText ? (
                                           <div className="h-80 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400">
@@ -369,20 +370,20 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                                                                                         <div className="flex-1">
                                                                                                                               <p className="font-semibold text-green-800 mb-2">✓ 优化完成</p>p>
                                                                                                                               <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
-                                                                                                                                                      <div>• 添加语气词: <span className="font-semibold">{optimizationStats.addedExclamations}</span>span> 个</div>div>
-                                                                                                                                                      <div>• 转换数字: <span className="font-semibold">{optimizationStats.convertedNumbers}</span>span> 个</div>div>
-                                                                                                                                                      <div>• 简化标点: <span className="font-semibold">{optimizationStats.simplifiedPunctuation}</span>span> 处</div>div>
-                                                                                                                                                      <div>• 压缩率: <span className="font-semibold">{optimizationStats.reductionRate}%</span>span></div>div>
+                                                                                                                                                      <div>• 添加语气词: <span className="font-semibold">{optimizationStats.addedExclamations}</span> 个</div>div>
+                                                                                                                                                      <div>• 转换数字: <span className="font-semibold">{optimizationStats.convertedNumbers}</span> 个</div>div>
+                                                                                                                                                      <div>• 简化标点: <span className="font-semibold">{optimizationStats.simplifiedPunctuation}</span> 处</div>div>
+                                                                                                                                                      <div>• 压缩率: <span className="font-semibold">{optimizationStats.reductionRate}%</span></div>div>
                                                                                                                                       </div>div>
                                                                                                                               <div className="mt-3 pt-3 border-t border-green-300">
                                                                                                                                                       <div className="flex justify-between items-center">
                                                                                                                                                                                 <div>
-                                                                                                                                                                                                            <span className="text-sm text-gray-600">预计时长: </span>span>
-                                                                                                                                                                                                            <span className="font-semibold text-blue-600">{Math.floor(estimatedDuration / 60)}分{estimatedDuration % 60}秒</span>span>
+                                                                                                                                                                                                            <span className="text-sm text-gray-600">预计时长: </span>
+                                                                                                                                                                                                            <span className="font-semibold text-blue-600">{Math.floor(estimatedDuration / 60)}分{estimatedDuration % 60}秒</span>
                                                                                                                                                                                                           </div>div>
                                                                                                                                                                                 <div>
-                                                                                                                                                                                                            <span className="text-sm text-gray-600">预计消耗: </span>span>
-                                                                                                                                                                                                            <span className="font-semibold text-orange-600">{estimatedCredits} 积分</span>span>
+                                                                                                                                                                                                            <span className="text-sm text-gray-600">预计消耗: </span>
+                                                                                                                                                                                                            <span className="font-semibold text-orange-600">{estimatedCredits} 积分</span>
                                                                                                                                                                                                           </div>div>
                                                                                                                                                               </div>div>
                                                                                                                                       </div>div>
@@ -402,7 +403,7 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                                             <h3 className="text-lg font-semibold flex items-center gap-2">
                                                                           <Scissors className="w-5 h-5" />
                                                                           智能分段预览
-                                                                          <span className="text-sm font-normal text-gray-500">（共 {segments.length} 段）</span>span>
+                                                                          <span className="text-sm font-normal text-gray-500">（共 {segments.length} 段）</span>
                                                             </h3>h3>
                                                             <div className="flex items-center gap-3">
                                                                           <button
@@ -443,8 +444,8 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                                                                               <div className="flex items-center gap-3">
                                                                                                                   <span className="inline-flex items-center justify-center w-7 h-7 bg-blue-100 text-blue-600 rounded-full text-sm font-semibold">
                                                                                                                           {index + 1}
-                                                                                                                          </span>span>
-                                                                                                                  <span className="text-sm text-gray-500">{segment.text.length} 字</span>span>
+                                                                                                                          </span>
+                                                                                                                  <span className="text-sm text-gray-500">{segment.text.length} 字</span>
                                                                                                       {renderStatusBadge(segment.status)}
                                                                                                       </div>div>
                                                                                               <div className="flex items-center gap-2">
