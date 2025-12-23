@@ -1,7 +1,7 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import { createRunPodClient } from '../services/runpodServerlessClient.js';
-import { aiServices } from '../config/aiServices.js';
+import aiServicesConfig from '../config/aiServices.js';
 
 const router = express.Router();
 
@@ -57,13 +57,13 @@ router.post('/tts', async (req, res) => {
                   text: text.substring(0, 20) + '...',
                   voiceId: ttsParams.voiceId,
                   emotions: ttsParams.emoVector,
-                  useRunPod: aiServices.runpod.useServerless
+                  useRunPod: aiServicesConfig.runpod.useServerless
           });
 
           let audioData;
 
           // 优先使用RunPod Serverless
-          if (aiServices.runpod.useServerless && runpodClient) {
+          if (aiServicesConfig.runpod.useServerless && runpodClient) {
                   try {
                             console.log('🚀 使用RunPod Serverless调用TTS...');
                             const result = await runpodClient.callTTS({
