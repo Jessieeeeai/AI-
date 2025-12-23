@@ -460,9 +460,9 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                                                                                                                                         }`}
                                                                                                                                               >
                                                                                                                         {currentPlayingSegment === segment.id ? (
-                                                                                                                                                                                <><Pause className="w-4 h-4" />暂停</>>
+                                                                                                                                                                                <><Pause className="w-4 h-4" />暂停</>
                                                                                                                                                                               ) : (
-                                                                                                                                                                                <><Play className="w-4 h-4" />播放</>>
+                                                                                                                                                                                <><Play className="w-4 h-4" />播放</>
                                                                                                                                                                               )}
                                                                                                                         </button>
                                                                                                                   )}
@@ -474,11 +474,11 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                                                                                                                                 className="flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors disabled:bg-gray-100 disabled:text-gray-400 text-sm"
                                                                                                                                               >
                                                                                                                         {segment.status === 'generating' ? (
-                                                                                                                                                                                <><RefreshCw className="w-4 h-4 animate-spin" />生成中</>>
+                                                                                                                                                                                <><RefreshCw className="w-4 h-4 animate-spin" />生成中</>
                                                                                                                                                                               ) : segment.status === 'ready' ? (
-                                                                                                                                                                                <><RotateCcw className="w-4 h-4" />重新生成</>>
+                                                                                                                                                                                <><RotateCcw className="w-4 h-4" />重新生成</>
                                                                                                                                                                               ) : (
-                                                                                                                                                                                <><Volume2 className="w-4 h-4" />生成语音</>>
+                                                                                                                                                                                <><Volume2 className="w-4 h-4" />生成语音</>
                                                                                                                                                                               )}
                                                                                                                         </button>
                                                                                                                   )}
