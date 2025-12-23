@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
-import { createRunPodClient } from './runpodServerlessClient.js';
+import { createRunPodClient } from '../services/runpodServerlessClient.js';
 import { aiServices } from '../config/aiServices.js';
 
 const router = express.Router();
