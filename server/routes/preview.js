@@ -65,7 +65,7 @@ router.post('/tts', async (req, res) => {
           if (aiServicesConfig.useRunPodServerless && runpodClient) {
                   try {
                             console.log('🚀 使用RunPod Serverless调用TTS...');
-                            const result = await runpodClient.callTTS({
+                            const result = await runpodClient.tts({
                                         text: ttsParams.text,
                                         voice_id: ttsParams.voiceId,
                                         reference_audio: ttsParams.referenceAudio,
