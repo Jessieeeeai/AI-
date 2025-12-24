@@ -64,7 +64,8 @@ class RunPodServerlessClient {
 
         // RunPod Serverless 标准格式: {"input": {...}}
               
-                        text: params.text,
+      const runpodPayload = {
+               text: params.text,
                         speaker: speaker
                }
         };
