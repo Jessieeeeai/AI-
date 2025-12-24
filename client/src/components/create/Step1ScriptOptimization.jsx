@@ -209,7 +209,7 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                                                               >
                                                                     <div className="font-semibold">{option.label}</div>div>
                                                                     <div className="text-sm text-gray-500">{option.desc}</div>div>
-                                                      </button>button>
+                                                      </button>
                                                     ))}
                                             </div>div>
                                     </div>div>
@@ -241,7 +241,7 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                                                                             className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                                                                                           >
                                                                                 清空
-                                                                  </button>button>
+                                                                  </button>
                                                                   <button
                                                                                             type="button"
                                                                                             onClick={handleOptimize}
@@ -259,7 +259,7 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                                                                                                                         AI优化文案
                                                                                                                                   </span>span>
                                                                                 )}
-                                                                  </button>button>
+                                                                  </button>
                                                       </div>div>
                                             </div>div>
                                     
@@ -332,7 +332,7 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                                                                                 >
                                                                                       <RefreshCw className="w-4 h-4" />
                                                                                       重新分段
-                                                                        </button>button>
+                                                                        </button>
                                                             </div>div>
                                                   
                                                             <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
@@ -372,7 +372,7 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                                                                   >
                                                                         <RefreshCw className="w-4 h-4" />
                                                                         重新优化
-                                                            </button>button>
+                                                            </button>
                                                             <button
                                                                                     type="button"
                                                                                     onClick={handleNext}
@@ -380,7 +380,7 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                                                                   >
                                                                         下一步：选择声音
                                                                         <ArrowRight className="w-4 h-4" />
-                                                            </button>button>
+                                                            </button>
                                                   </div>div>
                                     )}
                               
