@@ -56,13 +56,13 @@ router.post('/tts', async (req, res) => {
                   text: text.substring(0, 20) + '...',
                   voiceId: ttsParams.voiceId,
                   emotions: ttsParams.emoVector,
-                  useRunPod: aiServicesConfig.runpod.useServerless
+                  useRunPod: aiServicesConfig.useRunPodServerless
           });
 
           let audioData;
 
           // 优先使用RunPod Serverless
-          if (aiServicesConfig.runpod.useServerless && runpodClient) {
+          if (aiServicesConfig.useRunPodServerless && runpodClient) {
                   try {
                             console.log('🚀 使用RunPod Serverless调用TTS...');
                             const result = await runpodClient.callTTS({
