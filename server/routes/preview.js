@@ -31,8 +31,7 @@ router.post('/tts', async (req, res) => {
           if (text.length > 500) {
                   return res.status(400).json({
                             error: 'text_too_long',
-                            message: '预览文本不能超过100字'
-                  });
+                    message: '预览文本不能超过500字'                  });
           }
 
           // 准备TTS参数
