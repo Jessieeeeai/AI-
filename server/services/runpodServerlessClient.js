@@ -14,7 +14,7 @@ class RunPodServerlessClient {
         this.timeout = parseInt(process.env.RUNPOD_TIMEOUT || '180000'); // 3分钟超时
 
         if (this.apiKey && this.endpointId) {
-               console.log(`🚀 RunPod Serverless Client初始化 | Endpoint: ${this.endpointId} | 使用 runsync 模式`);
+               console.log(`🚀 RunPod Serverless Client初始化 | Endpoint: ${this.endpointId} | 使用 proxy/tts 模式`);
         }
    }
 
@@ -26,7 +26,7 @@ class RunPodServerlessClient {
    }
 
    /**
-      * 通过 RunPod Serverless /runsync 端点调用 TTS
+      * 通过 RunPod Serverless /proxy/tts 端点调用 TTS
          * @param {Object} params - TTS 参数
             * @returns {Promise<Object>} 包含音频数据的对象
                */
@@ -35,7 +35,7 @@ class RunPodServerlessClient {
                throw new Error('RunPod Serverless 未配置: 缺少 RUNPOD_API_KEY 或 RUNPOD_ENDPOINT_ID');
         }
 
-        console.log(`🎤 RunPod TTS (runsync模式) | 文本长度: ${params.text?.length} | 声音: ${params.voiceId}`);
+        console.log(`🎤 RunPod TTS (proxy/tts模式) | 文本长度: ${params.text?.length} | 声音: ${params.voiceId}`);
 
         // 构建 RunPod Serverless 输入参数
         // dreamolabs/indextts2-runpod 镜像使用 text 和 speaker 参数
@@ -63,13 +63,11 @@ class RunPodServerlessClient {
         const speaker = voiceMapping[params.voiceId] || voiceMapping['default'];
 
         // RunPod Serverless 标准格式: {"input": {...}}
-        const runpodPayload = {
-               input: {
+              
                         text: params.text,
                         speaker: speaker
                }
         };
-
         // 如果有情感参数，添加到输入中
         if (params.emoVector) {
                runpodPayload.input.emo_vector = params.emoVector;
@@ -78,12 +76,12 @@ class RunPodServerlessClient {
                runpodPayload.input.emo_alpha = params.emoAlpha;
         }
 
-        console.log(`📤 发送请求到 runsync 端点: ${this.baseUrl}/runsync`);
+        console.log(`📤 发送请求到 proxy/tts 端点: ${this.baseUrl}/proxy/tts`);
         console.log(`📝 请求参数:`, JSON.stringify(runpodPayload));
 
         try {
                const response = await axios.post(
-                        `${this.baseUrl}/runsync`,
+                        `${this.baseUrl}/proxy/tts`,
                         runpodPayload,
                 {
                            headers: {
@@ -94,7 +92,7 @@ class RunPodServerlessClient {
                 }
                       );
 
-               console.log(`✅ RunPod runsync 响应:`, JSON.stringify(response.data).substring(0, 200));
+               console.log(`✅ RunPod proxy/tts 响应:`, JSON.stringify(response.data).substring(0, 200));
 
                // 检查响应状态
                const result = response.data;
@@ -139,7 +137,7 @@ class RunPodServerlessClient {
         } catch (error) {
                if (error.response) {
                         const status = error.response.status;
-                        let errorMessage = `RunPod runsync 请求失败: ${status}`;
+                        let errorMessage = `RunPod proxy/tts 请求失败: ${status}`;
 
                         try {
                                    const errorData = error.response.data;
@@ -150,7 +148,7 @@ class RunPodServerlessClient {
                                    }
                         } catch {}
 
-                        console.error(`❌ RunPod runsync 错误: ${errorMessage}`);
+                        console.error(`❌ RunPod proxy/tts 错误: ${errorMessage}`);
                         throw new Error(errorMessage);
                }
 
