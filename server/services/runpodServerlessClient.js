@@ -220,4 +220,9 @@ class RunPodServerlessClient {
 // 导出单例
 const runpodServerlessClient = new RunPodServerlessClient();
 export default runpodServerlessClient;
-export { RunPodServerlessClient };
+export { RunPodServerlessClient, createRunPodClient };
+
+// 工厂函数 - 创建新的 RunPod 客户端实例
+function createRunPodClient() {
+     return new RunPodServerlessClient();
+}
