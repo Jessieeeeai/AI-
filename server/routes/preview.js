@@ -28,7 +28,7 @@ router.post('/tts', async (req, res) => {
           }
 
           // 限制文本长度（预览不需要太长）
-          if (text.length > 100) {
+          if (text.length > 500) {
                   return res.status(400).json({
                             error: 'text_too_long',
                             message: '预览文本不能超过100字'
