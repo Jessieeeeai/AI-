@@ -225,7 +225,7 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                             <div className="space-y-4">
                                                       <div className="flex items-center justify-between">
                                                                   <h3 className="text-lg font-semibold text-gray-900">📋 原始文案</h3>
-                                                                  <span className="text-sm text-gray-500">{originalText.length}/10000></span>
+                                                                  <span className="text-sm text-gray-500">{originalText.length}/10000</span>
                                                       </div>
                                                       <textarea
                                                                               value={originalText}
@@ -252,12 +252,12 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                                                                                                       <span className="flex items-center gap-2">
                                                                                                                                         <RefreshCw className="w-4 h-4 animate-spin" />
                                                                                                                                         正在优化...
-                                                                                                                                  ></span>
+                                                                                                                                  </span>
                                                                                                                     ) : (
                                                                                                                       <span className="flex items-center gap-2">
                                                                                                                                         <Sparkles className="w-4 h-4" />
                                                                                                                                         AI优化文案
-                                                                                                                                  ></span>
+                                                                                                                                  </span>
                                                                                 )}
                                                                   </button>
                                                       </div>
@@ -266,7 +266,7 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                             <div className="space-y-4">
                                                       <div className="flex items-center justify-between">
                                                                   <h3 className="text-lg font-semibold text-gray-900">✨ 优化后口播稿</h3>
-                                                                  {optimizedText && <span className="text-sm text-gray-500">{optimizedText.length}/10000></span>}
+                                                                  {optimizedText && <span className="text-sm text-gray-500">{optimizedText.length}/10000</span>}
                                                       </div>
                                                         {!optimizedText ? (
                                                       <div className="h-80 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400">
@@ -291,20 +291,20 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                                                                                                         <div className="flex-1">
                                                                                                                                               <p className="font-semibold text-green-800 mb-2">✓ 优化完成</p>
                                                                                                                                               <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
-                                                                                                                                                                      <div>• 添加语气词: <span className="font-semibold">{optimizationStats.addedExclamations}></span> 个</div>
-                                                                                                                                                                      <div>• 转换数字: <span className="font-semibold">{optimizationStats.convertedNumbers}></span> 个</div>
-                                                                                                                                                                      <div>• 简化标点: <span className="font-semibold">{optimizationStats.simplifiedPunctuation}></span> 处</div>
-                                                                                                                                                                      <div>• 压缩率: <span className="font-semibold">{optimizationStats.reductionRate}%></span></div>
+                                                                                                                                                                      <div>• 添加语气词: <span className="font-semibold">{optimizationStats.addedExclamations}</span> 个</div>
+                                                                                                                                                                      <div>• 转换数字: <span className="font-semibold">{optimizationStats.convertedNumbers}</span> 个</div>
+                                                                                                                                                                      <div>• 简化标点: <span className="font-semibold">{optimizationStats.simplifiedPunctuation}</span> 处</div>
+                                                                                                                                                                      <div>• 压缩率: <span className="font-semibold">{optimizationStats.reductionRate}%</span</div>
                                                                                                                                                           </div>
                                                                                                                                               <div className="mt-3 pt-3 border-t border-green-300">
                                                                                                                                                                       <div className="flex justify-between items-center">
                                                                                                                                                                                                 <div>
-                                                                                                                                                                                                                            <span className="text-sm text-gray-600">预计时长: ></span>
-                                                                                                                                                                                                                            <span className="font-semibold text-blue-600">{Math.floor(estimatedDuration / 60)}分{estimatedDuration % 60}秒></span>
+                                                                                                                                                                                                                            <span className="text-sm text-gray-600">预计时长: </span>
+                                                                                                                                                                                                                            <span className="font-semibold text-blue-600">{Math.floor(estimatedDuration / 60)}分{estimatedDuration % 60}秒</span>
                                                                                                                                                                                                                           </div>
                                                                                                                                                                                                 <div>
-                                                                                                                                                                                                                            <span className="text-sm text-gray-600">预计消耗: ></span>
-                                                                                                                                                                                                                            <span className="font-semibold text-orange-600">{estimatedCredits} 积分></span>
+                                                                                                                                                                                                                            <span className="text-sm text-gray-600">预计消耗: </span>
+                                                                                                                                                                                                                            <span className="font-semibold text-orange-600">{estimatedCredits} 积分</span>
                                                                                                                                                                                                                           </div>
                                                                                                                                                                                   </div>
                                                                                                                                                           </div>
@@ -323,7 +323,7 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                                                         <h3 className="text-lg font-semibold flex items-center gap-2">
                                                                                       <Scissors className="w-5 h-5" />
                                                                                       智能分段预览
-                                                                                      <span className="text-sm font-normal text-gray-500">（共 {segments.length} 段）></span>
+                                                                                      <span className="text-sm font-normal text-gray-500">（共 {segments.length} 段）</span>
                                                                         </h3>
                                                                         <button
                                                                                                   type="button"
@@ -345,9 +345,9 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                                                                                                               <div className="flex items-center gap-3">
                                                                                                                                   <span className="inline-flex items-center justify-center w-7 h-7 bg-blue-100 text-blue-600 rounded-full text-sm font-semibold">
                                                                                                                                               {index + 1}
-                                                                                                                                              ></span>
-                                                                                                                                  <span className="text-sm text-gray-500">{segment.text.length} 字></span>
-                                                                                                                                  <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">待生成></span>
+                                                                                                                                              </span>
+                                                                                                                                  <span className="text-sm text-gray-500">{segment.text.length} 字</span>
+                                                                                                                                  <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">待生成</span>
                                                                                                                           </div>
                                                                                                         </div>
                                                                                             <textarea
@@ -393,4 +393,4 @@ const Step1ScriptOptimization = ({ data, setData, onNext }) => {
                             );
 };
 
-export default Step1ScriptOptimization;</div>
+export default Step1ScriptOptimization;
