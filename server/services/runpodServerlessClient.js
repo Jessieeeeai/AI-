@@ -26,7 +26,7 @@ class RunPodServerlessClient {
    }
 
    /**
-      * 通过 RunPod Serverless /proxy/tts 端点调用 TTS
+      * 通过 RunPod Serverless /proxy/8002/tts 端点调用 TTS
          * @param {Object} params - TTS 参数
             * @returns {Promise<Object>} 包含音频数据的对象
                */
@@ -76,12 +76,12 @@ class RunPodServerlessClient {
                runpodPayload.t.emo_alpha = params.emoAlpha;
         }
 
-        console.log(`📤 发送请求到 proxy/tts 端点: ${this.baseUrl}/proxy/tts`);
+        console.log(`📤 发送请求到 proxy/tts 端点: ${this.baseUrl}/proxy/8002/tts`);
         console.log(`📝 请求参数:`, JSON.stringify(runpodPayload));
 
         try {
                const response = await axios.post(
-                        `${this.baseUrl}/proxy/tts`,
+                        `${this.baseUrl}/proxy/8002/tts`,
                         runpodPayload,
                 {
                            headers: {
