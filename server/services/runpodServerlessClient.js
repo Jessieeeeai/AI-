@@ -67,14 +67,13 @@ class RunPodServerlessClient {
       const runpodPayload = {
                text: params.text,
                         speaker: speaker
-               }
-        };
+      };
         // 如果有情感参数，添加到输入中
         if (params.emoVector) {
-               runpodPayload.input.emo_vector = params.emoVector;
+               runpodPayload.t.emo_vector = params.emoVector;
         }
         if (params.emoAlpha !== undefined) {
-               runpodPayload.input.emo_alpha = params.emoAlpha;
+               runpodPayload.t.emo_alpha = params.emoAlpha;
         }
 
         console.log(`📤 发送请求到 proxy/tts 端点: ${this.baseUrl}/proxy/tts`);
