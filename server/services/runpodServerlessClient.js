@@ -1,254 +1,179 @@
 /**
  * RunPod Serverless API 客户端
-  * 将 IndexTTS2 API 请求转换为 RunPod Serverless 格式
+  * 使用 RunPod proxy 模式直接调用 IndexTTS2 Flask API
    */
 
 import axios from 'axios';
 
 class RunPodServerlessClient {
-      constructor() {
+     constructor() {
               this.apiKey = process.env.RUNPOD_API_KEY;
               this.endpointId = process.env.RUNPOD_ENDPOINT_ID;
+              // 使用 proxy 模式直接调用容器内的 Flask API
               this.baseUrl = `https://api.runpod.ai/v2/${this.endpointId}`;
               this.timeout = parseInt(process.env.RUNPOD_TIMEOUT || '120000'); // 2分钟超时
 
               if (this.apiKey && this.endpointId) {
-                        console.log(`🚀 RunPod Serverless Client初始化 | Endpoint: ${this.endpointId}`);
+                           console.log(`🚀 RunPod Serverless Client初始化 | Endpoint: ${this.endpointId} | 使用 proxy 模式`);
               }
-      }
+     }
 
-      /**
-         * 检查是否已配置
-            */
-      isConfigured() {
+     /**
+          * 检查是否已配置
+               */
+     isConfigured() {
               return !!(this.apiKey && this.endpointId);
-      }
+     }
 
-      /**
-         * 发送同步请求到 RunPod (等待结果返回)
-            * @param {Object} input - 输入参数
-               * @returns {Promise<Object>} RunPod 响应
-                  */
-      async runsync(input) {
+     /**
+          * 通过 proxy 模式调用 IndexTTS2 的 /tts 端点
+               * @param {Object} params - TTS 参数
+                    * @returns {Promise<Object>} 包含音频数据的对象
+                         */
+     async tts(params) {
               if (!this.isConfigured()) {
-                        throw new Error('RunPod Serverless 未配置: 缺少 RUNPOD_API_KEY 或 RUNPOD_ENDPOINT_ID');
+                           throw new Error('RunPod Serverless 未配置: 缺少 RUNPOD_API_KEY 或 RUNPOD_ENDPOINT_ID');
               }
 
-              console.log(`📤 发送 RunPod runsync 请求...`);
+              console.log(`🎤 RunPod TTS (proxy模式) | 文本长度: ${params.text?.length} | 声音: ${params.voiceId}`);
 
-              const response = await axios.post(
-                        `${this.baseUrl}/runsync`,
-                  { input },
-                  {
-                              headers: {
-                                            'Authorization': `Bearer ${this.apiKey}`,
-                                            'Content-Type': 'application/json'
-                              },
-                              timeout: this.timeout
-                  }
-                      );
+              // 构建 IndexTTS2 API 需要的参数格式
+              // 使用内置的示例音频作为说话人参考
+              const voiceMapping = {
+                           'default': '/app/examples/voice_01.wav',
+                           'voice_01': '/app/examples/voice_01.wav',
+                           'voice_02': '/app/examples/voice_02.wav',
+                           'voice_03': '/app/examples/voice_03.wav',
+                           'voice_04': '/app/examples/voice_04.wav',
+                           'voice_05': '/app/examples/voice_05.wav',
+                           'voice_06': '/app/examples/voice_06.wav',
+                           'voice_07': '/app/examples/voice_07.wav',
+                           'voice_08': '/app/examples/voice_08.wav',
+                           'voice_09': '/app/examples/voice_09.wav',
+                           'voice_10': '/app/examples/voice_10.wav',
+                           'voice_11': '/app/examples/voice_11.wav',
+                           'voice_12': '/app/examples/voice_12.wav'
+              };
 
-              console.log(`📥 RunPod 响应状态: ${response.data.status}`);
+              const spkAudioPrompt = voiceMapping[params.voiceId] || voiceMapping['default'];
 
-               // 处理IN_QUEUE和IN_PROGRESS状态 - 轮询等待完成
-               if (response.data.status === 'IN_QUEUE' || response.data.status === 'IN_PROGRESS') {
-                            const jobId = response.data.id;
-                            console.log(`📋 RunPod 任务排队中，开始轮询... jobId: ${jobId}`);
+              const ttsPayload = {
+                           text: params.text,
+                           spk_audio_prompt: spkAudioPrompt
+              };
 
-                            // 轮询等待任务完成，最多等待2分钟
-                            const maxAttempts = 24;
-                            const pollInterval = 5000; // 5秒
-
-                            for (let attempt = 0; attempt < maxAttempts; attempt++) {
-                                             await new Promise(resolve => setTimeout(resolve, pollInterval));
-
-                                             const statusResponse = await this.status(jobId);
-                                             console.log(`📋 轮询 ${attempt + 1}/${maxAttempts}: 状态=${statusResponse.status}`);
-
-                                             if (statusResponse.status === 'COMPLETED') {
-                                                                  console.log('✅ RunPod 任务完成');
-                                                                  return statusResponse;
-                                             } else if (statusResponse.status === 'FAILED') {
-                                                                  throw new Error(statusResponse.error || 'RunPod job failed');
-                                             }
-                                             // 继续轮询 IN_QUEUE 或 IN_PROGRESS
-                            }
-                            throw new Error('RunPod 任务超时');
-               }
-
-              if (response.data.status === 'FAILED') {
-                        throw new Error(response.data.error || 'RunPod job failed');
+              // 如果有情感参数，添加到请求中
+              if (params.emoVector) {
+                           ttsPayload.emo_vector = params.emoVector;
+              }
+              if (params.emoAlpha !== undefined) {
+                           ttsPayload.emo_alpha = params.emoAlpha;
               }
 
-              return response.data;
-      }
+              console.log(`📤 发送请求到 proxy 端点: ${this.baseUrl}/proxy/tts`);
+              console.log(`📝 请求参数:`, JSON.stringify(ttsPayload));
 
-      /**
-         * 发送异步请求到 RunPod (立即返回 job ID)
-            * @param {Object} input - 输入参数
-               * @returns {Promise<Object>} 包含 job ID 的响应
-                  */
-      async run(input) {
-              if (!this.isConfigured()) {
-                        throw new Error('RunPod Serverless 未配置');
-              }
-
-              const response = await axios.post(
-                        `${this.baseUrl}/run`,
-                  { input },
-                  {
-                              headers: {
-                                            'Authorization': `Bearer ${this.apiKey}`,
-                                            'Content-Type': 'application/json'
-                              },
-                              timeout: 30000
-                  }
-                      );
-
-              return response.data;
-      }
-
-      /**
-         * 获取异步任务状态
-            * @param {string} jobId - 任务 ID
-               * @returns {Promise<Object>} 任务状态
-                  */
-      async status(jobId) {
-              const response = await axios.get(
-                        `${this.baseUrl}/status/${jobId}`,
-                  {
-                              headers: {
-                                            'Authorization': `Bearer ${this.apiKey}`
-                              },
-                              timeout: 10000
-                  }
-                      );
-
-              return response.data;
-      }
-
-      /**
-         * TTS 生成 - 适配 /api/v1/tts
-            * @param {Object} params - TTS 参数
-               * @returns {Promise<Object>} 包含音频数据的对象
-                  */
-      async tts(params) {
-              console.log(`🎤 RunPod TTS | 文本长度: ${params.text?.length} | 声音: ${params.voiceId}`);
-
-              const result = await this.runsync({
-                        action: 'tts',
-                        text: params.text,
-                        voice_id: params.voiceId || 'default',
-                        emo_vector: params.emoVector || [0.7, 0, 0.1, 0, 0, 0, 0.3, 0.3],
-                        emo_alpha: params.emoAlpha || 0.8
-              });
-
-              // RunPod handler 返回 base64 编码的音频
-              if (result.output && result.output.audio) {
-                        console.log(`✅ RunPod TTS 成功`);
-                        return {
-                                    audio_base64: result.output.audio
-                        };
-              }
-
-              // 如果直接返回音频数据
-              if (result.output && typeof result.output === 'string') {
-                        return {
-                                    audio_base64: result.output
-                        };
-              }
-
-              throw new Error('RunPod TTS 返回格式异常');
-      }
-
-      /**
-         * callTTS - tts 方法的别名，用于兼容
-            * @param {Object} params - TTS 参数
-               * @returns {Promise<Object>} 包含音频数据的对象
-                  */
-      async callTTS(params) {
-              return this.tts(params);
-      }
-
-      /**
-         * 声音克隆 - 适配 /api/v1/clone
-            * @param {Object} params - 克隆参数
-               * @returns {Promise<Object>} 克隆结果
-                  */
-      async cloneVoice(params) {
-              console.log(`🎤 RunPod Clone | voiceId: ${params.voiceId}`);
-
-              const result = await this.runsync({
-                        action: 'clone',
-                        voice_id: params.voiceId,
-                        audio_data: params.audioBase64
-              });
-
-              console.log(`✅ RunPod Clone 成功`);
-              return result.output;
-      }
-
-      /**
-         * callClone - cloneVoice 方法的别名，用于兼容
-            * @param {Object} params - 克隆参数
-               * @returns {Promise<Object>} 克隆结果
-                  */
-      async callClone(params) {
-              return this.cloneVoice(params);
-      }
-
-      /**
-         * 获取可用声音列表
-            * @returns {Promise<Object>} 声音列表
-               */
-      async listVoices() {
               try {
-                        const result = await this.runsync({
-                                    action: 'list_voices'
-                        });
-
-                        return result.output;
-              } catch (error) {
-                        console.error('❌ 获取声音列表失败:', error.message);
-                        return {
-                                    voices: {
-                                                  system: ['default'],
-                                                  custom: []
-                                    }
-                        };
-              }
-      }
-
-      /**
-         * 健康检查
-            * @returns {Promise<Object|null>} 健康状态
-               */
-      async checkHealth() {
-              try {
-                        const response = await axios.get(
-                                    `${this.baseUrl}/health`,
+                           const response = await axios.post(
+                                            `${this.baseUrl}/proxy/tts`,
+                                            ttsPayload,
                             {
-                                          headers: {
-                                                          'Authorization': `Bearer ${this.apiKey}`
-                                          },
-                                          timeout: 5000
+                                                 headers: {
+                                                                          'Authorization': `Bearer ${this.apiKey}`,
+                                                                          'Content-Type': 'application/json'
+                                                 },
+                                                 timeout: this.timeout,
+                                                 responseType: 'arraybuffer' // 期望返回二进制音频数据
                             }
-                                  );
+                                        );
 
-                        return response.data;
+                           console.log(`✅ RunPod proxy 请求成功 | 响应大小: ${response.data.length} bytes`);
+
+                           // 检查响应是否是 JSON（可能是错误信息）
+                           const contentType = response.headers['content-type'] || '';
+                           if (contentType.includes('application/json')) {
+                                            // 尝试解析为 JSON
+                                            const jsonStr = Buffer.from(response.data).toString('utf8');
+                                            const jsonData = JSON.parse(jsonStr);
+
+                                            if (jsonData.error) {
+                                                                 throw new Error(jsonData.error);
+                                            }
+
+                                            // 如果返回的是 base64 音频
+                                            if (jsonData.audio || jsonData.audio_base64) {
+                                                                 return {
+                                                                                          audio_base64: jsonData.audio || jsonData.audio_base64
+                                                                  };
+                                            }
+                           }
+
+                           // 响应是原始音频数据，转换为 base64
+                           const audioBase64 = Buffer.from(response.data).toString('base64');
+                           return {
+                                            audio_base64: audioBase64
+                           };
+
               } catch (error) {
-                        console.error('❌ RunPod 健康检查失败:', error.message);
-                        return null;
+                           if (error.response) {
+                                            const status = error.response.status;
+                                            let errorMessage = `RunPod proxy 请求失败: ${status}`;
+
+                                            // 尝试解析错误响应
+                                            try {
+                                                                 const errorData = error.response.data;
+                                                                 if (Buffer.isBuffer(errorData)) {
+                                                                                          const errorStr = errorData.toString('utf8');
+                                                                                          try {
+                                                                                                                       const errorJson = JSON.parse(errorStr);
+                                                                                                                       errorMessage = errorJson.error || errorJson.message || errorMessage;
+                                                                                           } catch {
+                                                                                                                       errorMessage = errorStr || errorMessage;
+                                                                                           }
+                                                                 }
+                                            } catch {}
+
+                                            console.error(`❌ RunPod proxy 错误: ${errorMessage}`);
+                                            throw new Error(errorMessage);
+                           }
+
+                           console.error(`❌ RunPod TTS 失败:`, error.message);
+                           throw error;
               }
-      }
+     }
+
+     /**
+          * 健康检查 - 通过 proxy 模式调用 /health 端点
+               */
+     async healthCheck() {
+              if (!this.isConfigured()) {
+                           return { status: 'not_configured' };
+              }
+
+              try {
+                           const response = await axios.get(
+                                            `${this.baseUrl}/proxy/health`,
+                            {
+                                                 headers: {
+                                                                          'Authorization': `Bearer ${this.apiKey}`
+                                                 },
+                                                 timeout: 30000
+                            }
+                                        );
+                           return response.data;
+              } catch (error) {
+                           console.error('RunPod 健康检查失败:', error.message);
+                           return { status: 'error', message: error.message };
+              }
+     }
 }
 
-// 导出单例
-const runpodServerlessClient = new RunPodServerlessClient();
-export default runpodServerlessClient;
-export { RunPodServerlessClient, createRunPodClient };
+// 创建单例实例
+const runPodClient = new RunPodServerlessClient();
 
-// 工厂函数 - 创建新的 RunPod 客户端实例
-function createRunPodClient() {
+// 创建客户端的工厂函数
+export function createRunPodClient() {
      return new RunPodServerlessClient();
 }
+
+export default runPodClient;
