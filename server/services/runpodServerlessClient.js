@@ -50,6 +50,32 @@ class RunPodServerlessClient {
 
               console.log(`📥 RunPod 响应状态: ${response.data.status}`);
 
+               // 处理IN_QUEUE和IN_PROGRESS状态 - 轮询等待完成
+               if (response.data.status === 'IN_QUEUE' || response.data.status === 'IN_PROGRESS') {
+                            const jobId = response.data.id;
+                            console.log(`📋 RunPod 任务排队中，开始轮询... jobId: ${jobId}`);
+
+                            // 轮询等待任务完成，最多等待2分钟
+                            const maxAttempts = 24;
+                            const pollInterval = 5000; // 5秒
+
+                            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                                             await new Promise(resolve => setTimeout(resolve, pollInterval));
+
+                                             const statusResponse = await this.status(jobId);
+                                             console.log(`📋 轮询 ${attempt + 1}/${maxAttempts}: 状态=${statusResponse.status}`);
+
+                                             if (statusResponse.status === 'COMPLETED') {
+                                                                  console.log('✅ RunPod 任务完成');
+                                                                  return statusResponse;
+                                             } else if (statusResponse.status === 'FAILED') {
+                                                                  throw new Error(statusResponse.error || 'RunPod job failed');
+                                             }
+                                             // 继续轮询 IN_QUEUE 或 IN_PROGRESS
+                            }
+                            throw new Error('RunPod 任务超时');
+               }
+
               if (response.data.status === 'FAILED') {
                         throw new Error(response.data.error || 'RunPod job failed');
               }
