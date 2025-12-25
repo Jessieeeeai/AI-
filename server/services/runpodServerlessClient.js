@@ -160,7 +160,7 @@ class RunPodServerlessClient {
    /**
       * 轮询任务状态
          */
-   async pollStatus(jobId, maxAttempts = 60) {
+   async pollStatus(jobId, maxAttempts = 180) {
         const pollInterval = 2000; // 2秒轮询一次
 
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
