@@ -6,6 +6,14 @@ import aiServicesConfig from '../config/aiServices.js';
 
 const router = express.Router();
 
+// 声音ID到音频URL的映射
+const VOICE_AUDIO_MAP = {
+   'dapiaoliang': 'https://pub-7e2c78d85f9642f68cb7d2794fc53473.r2.dev/dapiaoliang.wav',
+   'male_magnetic': 'examples/voice_01.wav',
+   'female_gentle': 'examples/voice_01.wav',
+   'female_lively': 'examples/voice_01.wav',
+};
+
 // 需要认证
 router.use(authenticateToken);
 
@@ -99,7 +107,7 @@ router.post('/tts', async (req, res) => {
                         // 可选参数: emo_vector, emo_alpha
                         const requestBody = {
                                    text: ttsParams.text,
-                                   spk_audio_prompt: 'examples/voice_01.wav',  // 使用容器内预置的示例音频
+                                   spk_audio_prompt: VOICE_AUDIO_MAP[ttsParams.voiceId] || 'examples/voice_01.wav',
                                    emo_vector: ttsParams.emoVector,
                                    emo_alpha: ttsParams.emoAlpha
                         };
