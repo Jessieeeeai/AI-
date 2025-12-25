@@ -40,7 +40,6 @@ router.post('/tts', async (req, res) => {
         const ttsParams = {
                text: text.trim(),
                voiceId: voiceId || 'male_magnetic',
-               referenceAudio: voiceId === 'dapiaoliang' ? '/uploads/voices/样板声音1.m4a' : null,
                emoVector: [
                         voiceSettings?.emotions?.happiness || 0.7,
                         voiceSettings?.emotions?.anger || 0.0,
@@ -57,7 +56,6 @@ router.post('/tts', async (req, res) => {
         console.log('📢 TTS预览请求:', {
                text: text.substring(0, 20) + '...',
                voiceId: ttsParams.voiceId,
-               emotions: ttsParams.emoVector,
                useRunPodServerless: aiServicesConfig.useRunPodServerless,
                indexTTS2Url: aiServicesConfig.indexTTS2.apiUrl
         });
@@ -87,32 +85,40 @@ router.post('/tts', async (req, res) => {
                         }
                } catch (runpodError) {
                         console.error('❌ RunPod Serverless TTS失败:', runpodError.message);
-                        // 降级到GPU Pod直连或Mock
                }
         }
 
         // 模式2: 使用GPU Pod直连 (INDEXTTS2_API_URL)
+        // IndexTTS2 API 格式: {"text": "...", "spk_audio_prompt": "examples/voice_01.wav"}
         if (!audioData && aiServicesConfig.indexTTS2.apiUrl && aiServicesConfig.indexTTS2.apiUrl !== 'http://localhost:5000') {
                try {
                         console.log('🔧 使用GPU Pod直连调用TTS:', aiServicesConfig.indexTTS2.apiUrl);
 
+                        // IndexTTS2 neosun/indextts2 镜像的API格式
+                        // 必须参数: text, spk_audio_prompt (说话人参考音频路径)
+                        // 可选参数: emo_vector, emo_alpha
+                        const requestBody = {
+                                   text: ttsParams.text,
+                                   spk_audio_prompt: 'examples/voice_01.wav',  // 使用容器内预置的示例音频
+                                   emo_vector: ttsParams.emoVector,
+                                   emo_alpha: ttsParams.emoAlpha
+                        };
+
+                        console.log('📤 请求参数:', JSON.stringify(requestBody));
+
                         const response = await axios.post(
                                    `${aiServicesConfig.indexTTS2.apiUrl}/tts`,
-                         {
-                                      text: ttsParams.text,
-                                      speaker: ttsParams.voiceId,
-                                      emo_vector: ttsParams.emoVector,
-                                      emo_alpha: ttsParams.emoAlpha
-                         },
+                                   requestBody,
                          {
                                       headers: { 'Content-Type': 'application/json' },
-                                      timeout: aiServicesConfig.indexTTS2.timeout || 60000,
+                                      timeout: aiServicesConfig.indexTTS2.timeout || 120000,
                                       responseType: 'arraybuffer'
                          }
                                  );
 
                         // 检查响应内容类型
                         const contentType = response.headers['content-type'];
+                        console.log('📥 响应Content-Type:', contentType, '数据大小:', response.data.length);
 
                         if (contentType && contentType.includes('audio')) {
                                    // 直接返回音频数据
@@ -120,22 +126,37 @@ router.post('/tts', async (req, res) => {
                                    console.log('✅ GPU Pod直连TTS成功，音频大小:', audioData.length);
                         } else {
                                    // 可能是JSON响应，尝试解析
-                                   const jsonStr = Buffer.from(response.data).toString('utf-8');
-                                   const result = JSON.parse(jsonStr);
+                                   try {
+                                                const jsonStr = Buffer.from(response.data).toString('utf-8');
+                                                const result = JSON.parse(jsonStr);
 
-                                   if (result.audio_base64) {
-                                                audioData = Buffer.from(result.audio_base64, 'base64');
-                                                console.log('✅ GPU Pod直连TTS成功 (base64)，音频大小:', audioData.length);
-                                   } else if (result.audio) {
-                                                audioData = Buffer.from(result.audio, 'base64');
-                                                console.log('✅ GPU Pod直连TTS成功 (audio)，音频大小:', audioData.length);
-                                   } else {
-                                                throw new Error('GPU Pod返回格式无效: ' + jsonStr.substring(0, 100));
+                                                if (result.audio_base64) {
+                                                               audioData = Buffer.from(result.audio_base64, 'base64');
+                                                               console.log('✅ GPU Pod直连TTS成功 (base64)，音频大小:', audioData.length);
+                                                } else if (result.audio) {
+                                                               audioData = Buffer.from(result.audio, 'base64');
+                                                               console.log('✅ GPU Pod直连TTS成功 (audio)，音频大小:', audioData.length);
+                                                } else if (result.error) {
+                                                               throw new Error('GPU Pod返回错误: ' + result.error);
+                                                } else {
+                                                               throw new Error('GPU Pod返回格式无效: ' + jsonStr.substring(0, 200));
+                                                }
+                                   } catch (parseError) {
+                                                // 如果解析失败，可能就是音频数据
+                                                if (response.data.length > 1000) {
+                                                               audioData = response.data;
+                                                               console.log('✅ GPU Pod直连TTS成功 (raw)，音频大小:', audioData.length);
+                                                } else {
+                                                               throw parseError;
+                                                }
                                    }
                         }
                } catch (podError) {
                         console.error('❌ GPU Pod直连TTS失败:', podError.message);
-                        // 降级到Mock
+                        if (podError.response) {
+                                   console.error('❌ 响应状态:', podError.response.status);
+                                   console.error('❌ 响应数据:', Buffer.from(podError.response.data || '').toString('utf-8').substring(0, 500));
+                        }
                }
         }
 
@@ -160,7 +181,7 @@ router.post('/tts', async (req, res) => {
         if (error.code === 'ECONNREFUSED') {
                return res.status(503).json({
                         error: 'service_unavailable',
-                        message: 'TTS服务暂时不可用，请使用Mock模式'
+                        message: 'TTS服务暂时不可用'
                });
         }
 
@@ -175,36 +196,26 @@ router.post('/tts', async (req, res) => {
  * 生成Mock静音音频
   */
 function generateMockAudio() {
-   // 生成一个简单的静音WAV文件作为降级方案
-   // WAV header + 1秒静音数据 (44100Hz, 16bit, mono)
    const sampleRate = 44100;
-   const duration = 1; // 1秒
+   const duration = 1;
    const numSamples = sampleRate * duration;
-   const dataSize = numSamples * 2; // 16bit = 2 bytes
+   const dataSize = numSamples * 2;
    const fileSize = 44 + dataSize;
-
    const buffer = Buffer.alloc(fileSize);
 
-   // RIFF header
    buffer.write('RIFF', 0);
    buffer.writeUInt32LE(fileSize - 8, 4);
    buffer.write('WAVE', 8);
-
-   // fmt chunk
    buffer.write('fmt ', 12);
-   buffer.writeUInt32LE(16, 16); // chunk size
-   buffer.writeUInt16LE(1, 20);  // PCM format
-   buffer.writeUInt16LE(1, 22);  // mono
+   buffer.writeUInt32LE(16, 16);
+   buffer.writeUInt16LE(1, 20);
+   buffer.writeUInt16LE(1, 22);
    buffer.writeUInt32LE(sampleRate, 24);
-   buffer.writeUInt32LE(sampleRate * 2, 28); // byte rate
-   buffer.writeUInt16LE(2, 32);  // block align
-   buffer.writeUInt16LE(16, 34); // bits per sample
-
-   // data chunk
+   buffer.writeUInt32LE(sampleRate * 2, 28);
+   buffer.writeUInt16LE(2, 32);
+   buffer.writeUInt16LE(16, 34);
    buffer.write('data', 36);
    buffer.writeUInt32LE(dataSize, 40);
-
-   // 静音数据已经是0，不需要额外填充
 
    return buffer;
 }
