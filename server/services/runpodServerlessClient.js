@@ -67,7 +67,7 @@ class RunPodServerlessClient {
       const runpodPayload = { input: {
                text: params.text,
                         speaker: speaker
-      };
+      }};
         // 如果有情感参数，添加到输入中
         if (params.emoVector) {
                runpodPayload.input.emo_vector = params.emoVector;
