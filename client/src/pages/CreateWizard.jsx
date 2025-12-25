@@ -28,7 +28,7 @@ export default function CreateWizard() {
 
     // Step 2: 声音设置
     voiceType: 'system', // 'system' or 'custom'
-    systemVoiceId: 'male_magnetic',
+    systemVoiceId: 'dapiaoliang',
     customVoiceId: null,
     voiceSettings: {
       speed: 1.0,
