@@ -236,27 +236,42 @@ const Step2AudioPreview = ({ data, setData, onNext, onPrev }) => {
                                                                                     <input type="range" min="0.0" max="1.0" step="0.1" value={voiceSettings.volume} onChange={(e) => setVoiceSettings({ ...voiceSettings, volume: parseFloat(e.target.value) })} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
                                                                     </div>
                                                               {/* 情绪控制 */}
-                                                                                <div className="mt-4 pt-4 border-t border-gray-100">
-                                                                                                    <h5 className="font-medium text-sm mb-3">🎭 情绪控制</h5>
-                                                                                                    <div className="space-y-3">
-                                                                                                                          <div>
-                                                                                                                                                  <label className="flex justify-between text-sm mb-1"><span>😊 快乐</span><span className="text-blue-600">{Math.round((voiceSettings.emotions?.happiness || 0.7) * 100)}%</span></label>
-                                                                                                                                                  <input type="range" min="0" max="1" step="0.1" value={voiceSettings.emotions?.happiness || 0.7} onChange={(e) => setVoiceSettings({ ...voiceSettings, emotions: { ...voiceSettings.emotions, happiness: parseFloat(e.target.value) } })} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
-                                                                                                                                  </div>
-                                                                                                                          <div>
-                                                                                                                                                  <label className="flex justify-between text-sm mb-1"><span>😢 悲伤</span><span className="text-blue-600">{Math.round((voiceSettings.emotions?.sadness || 0.1) * 100)}%</span></label>
-                                                                                                                                                  <input type="range" min="0" max="1" step="0.1" value={voiceSettings.emotions?.sadness || 0.1} onChange={(e) => setVoiceSettings({ ...voiceSettings, emotions: { ...voiceSettings.emotions, sadness: parseFloat(e.target.value) } })} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
-                                                                                                                                  </div>
-                                                                                                                          <div>
-                                                                                                                                                  <label className="flex justify-between text-sm mb-1"><span>😠 愤怒</span><span className="text-blue-600">{Math.round((voiceSettings.emotions?.anger || 0) * 100)}%</span></label>
-                                                                                                                                                  <input type="range" min="0" max="1" step="0.1" value={voiceSettings.emotions?.anger || 0} onChange={(e) => setVoiceSettings({ ...voiceSettings, emotions: { ...voiceSettings.emotions, anger: parseFloat(e.target.value) } })} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
-                                                                                                                                  </div>
-                                                                                                                          <div>
-                                                                                                                                                  <label className="flex justify-between text-sm mb-1"><span>😮 惊讶</span><span className="text-blue-600">{Math.round((voiceSettings.emotions?.surprise || 0.3) * 100)}%</span></label>
-                                                                                                                                                  <input type="range" min="0" max="1" step="0.1" value={voiceSettings.emotions?.surprise || 0.3} onChange={(e) => setVoiceSettings({ ...voiceSettings, emotions: { ...voiceSettings.emotions, surprise: parseFloat(e.target.value) } })} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
-                                                                                                                                  </div>
-                                                                                                            </div>
-                                                                                </div></div>
+                                                                              <div className="mt-4 pt-4 border-t border-gray-100">
+                                                                                                <h5 className="font-medium text-sm mb-3">🎭 情绪控制</h5>
+                                                                                                <div className="space-y-3">
+                                                                                                                    <div>
+                                                                                                                                          <label className="flex justify-between text-sm mb-1">
+                                                                                                                                                                  <span>😊 快乐</span>
+                                                                                                                                                                  <span className="text-blue-600">{Math.round((voiceSettings.emotions?.happiness || 0.7) * 100)}%</span>
+                                                                                                                                                  </label>
+                                                                                                                                          <input type="range" min="0" max="1" step="0.1" value={voiceSettings.emotions?.happiness || 0.7} onChange={(e) => setVoiceSettings({ ...voiceSettings, emotions: { ...voiceSettings.emotions, happiness: parseFloat(e.target.value) } })} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                                                                                                                            </div>
+                                                                                                                    <div>
+                                                                                                                                          <label className="flex justify-between text-sm mb-1">
+                                                                                                                                                                  <span>😢 悲伤</span>
+                                                                                                                                                                  <span className="text-blue-600">{Math.round((voiceSettings.emotions?.sadness || 0.1) * 100)}%</span>
+                                                                                                                                                  </label>
+                                                                                                                                          <input type="range" min="0" max="1" step="0.1" value={voiceSettings.emotions?.sadness || 0.1} onChange={(e) => setVoiceSettings({ ...voiceSettings, emotions: { ...voiceSettings.emotions, sadness: parseFloat(e.target.value) } })} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                                                                                                                            </div>
+                                                                                                                    <div>
+                                                                                                                                          <label className="flex justify-between text-sm mb-1">
+                                                                                                                                                                  <span>😠 愤怒</span>
+                                                                                                                                                                  <span className="text-blue-600">{Math.round((voiceSettings.emotions?.anger || 0) * 100)}%</span>
+                                                                                                                                                  </label>
+                                                                                                                                          <input type="range" min="0" max="1" step="0.1" value={voiceSettings.emotions?.anger || 0} onChange={(e) => setVoiceSettings({ ...voiceSettings, emotions: { ...voiceSettings.emotions, anger: parseFloat(e.target.value) } })} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                                                                                                                            </div>
+                                                                                                                    <div>
+                                                                                                                                          <label className="flex justify-between text-sm mb-1">
+                                                                                                                                                                  <span>😮 惊讶</span>
+                                                                                                                                                                  <span className="text-blue-600">{Math.round((voiceSettings.emotions?.surprise || 0.3) * 100)}%</span>
+                                                                                                                                                  </label>
+                                                                                                                                          <input type="range" min="0" max="1" step="0.1" value={voiceSettings.emotions?.surprise || 0.3} onChange={(e) => setVoiceSettings({ ...voiceSettings, emotions: { ...voiceSettings.emotions, surprise: parseFloat(e.target.value) } })} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                                                                                                                            </div>
+                                                                                                        </div>
+                                                                              </div>
+                                                      </div>
+                                          </div>
+                                </div></div>
                                                       </div>
                                           </div>
                                 </div>
