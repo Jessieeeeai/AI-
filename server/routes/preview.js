@@ -8,7 +8,7 @@ const router = express.Router();
 
 // 声音ID到音频URL的映射
 const VOICE_AUDIO_MAP = {
-   'dapiaoliang': 'examples/voice_01.wav',
+   'dapiaoliang': 'examples/dapiaoliang.wav',
    'male_magnetic': 'examples/voice_01.wav',
    'female_gentle': 'examples/voice_01.wav',
    'female_lively': 'examples/voice_01.wav',
