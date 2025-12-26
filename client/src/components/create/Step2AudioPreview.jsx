@@ -270,9 +270,7 @@ const Step2AudioPreview = ({ data, setData, onNext, onPrev }) => {
                                                                                                         </div>
                                                                               </div>
                                                       </div>
-                                          </div>
-                                </div></div>
-                                                      </div>
+                                          </div>                                                      </div>
                                           </div>
                                 </div>
                         
