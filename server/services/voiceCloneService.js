@@ -185,12 +185,22 @@ class VoiceCloneService {
                             throw new Error('声音记录不存在');
                   }
 
-                  // 2. 构建音频文件的绝对路径
-                  const audioPath = path.join(__dirname, '../../', voice.audio_url);
+// 2. 获取音频路径或URL
+                   let audioPath;
+                   const isHttpUrl = voice.audio_url.startsWith('http://') || voice.audio_url.startsWith('https://');
 
-                  if (!fs.existsSync(audioPath)) {
-                            throw new Error(`音频文件不存在: ${audioPath}`);
-                  }
+                   if (isHttpUrl) {
+                                // R2存储的HTTP URL，直接使用
+                                audioPath = voice.audio_url;
+                                console.log('🌐 使用R2 HTTP URL:', audioPath);
+                   } else {
+                                // 本地文件路径
+                                audioPath = path.join(__dirname, '../../', voice.audio_url);
+                                if (!fs.existsSync(audioPath)) {
+                                                 throw new Error(`音频文件不存在: ${audioPath}`);
+                                }
+                                console.log('📁 使用本地文件:', audioPath);
+                   }
 
                   // 3. 更新状态为处理中
                   await dbRun(
