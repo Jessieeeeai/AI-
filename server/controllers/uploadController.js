@@ -119,9 +119,9 @@ export const uploadVoice = async (req, res) => {
 
     // 保存到数据库
     await dbRun(
-      `INSERT INTO user_voices (id, user_id, audio_url, duration, status) 
-       VALUES (?, ?, ?, ?, ?)`,
-      [voiceId, userId, audioUrl, 0, 'processing']
+      `INSERT INTO user_voices (id, user_id, audio_url, file_name, duration, status) 
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [voiceId, userId, audioUrl, file.originalname, 0, 'processing']
     );
 
     // 触发声音克隆处理任务（异步处理）
@@ -139,7 +139,7 @@ export const uploadVoice = async (req, res) => {
       voice: {
         id: voiceId,
         voiceId: voiceId,  // 兼容前端
-        audioUrl: audioUrl,
+        audioUrl: audioUrl,        fileName: file.originalname,
         status: 'processing',
         duration: 0,
               createdAt: new Date().toISOString()},
