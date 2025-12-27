@@ -241,6 +241,104 @@ class RunPodServerlessClient {
                return { status: 'error', message: error.message };
         }
    }
+
+   /**
+      * 声音克隆 - 使用用户上传的音频克隆声音
+         * @param {Object} params - 克隆参数
+            * @param {string} params.voiceId - 声音ID
+               * @param {string} params.audioBase64 - 音频文件的base64编码
+                  * @param {string} params.audioFilename - 音频文件名
+                     * @returns {Promise<Object>} 克隆结果
+                        */
+   async callClone(params) {
+        if (!this.isConfigured()) {
+               throw new Error('RunPod Serverless 未配置: 缺少 RUNPOD_API_KEY 或 RUNPOD_ENDPOINT_ID');
+        }
+
+        console.log(`🎤 RunPod 声音克隆 | voiceId: ${params.voiceId} | 文件: ${params.audioFilename}`);
+
+        // 构建 RunPod Serverless 克隆请求
+        // 使用 speaker_audio 参数传递用户上传的音频
+        const runpodPayload = {
+               input: {
+                        text: "这是一个测试语音克隆的句子。",
+                        speaker_audio: params.audioBase64,
+                        voice_id: params.voiceId
+               }
+        };
+
+        console.log(`📤 发送克隆请求到: ${this.baseUrl}/runsync`);
+
+        try {
+               const response = await axios.post(
+                        `${this.baseUrl}/runsync`,
+                        runpodPayload,
+                {
+                           headers: {
+                                        'Authorization': `Bearer ${this.apiKey}`,
+                                        'Content-Type': 'application/json'
+                           },
+                           timeout: this.timeout
+                }
+                      );
+
+               console.log(`✅ RunPod 克隆响应:`, JSON.stringify(response.data).substring(0, 200));
+
+               const result = response.data;
+
+               if (result.status === 'FAILED') {
+                        throw new Error(result.error || 'RunPod clone job failed');
+               }
+
+               if (result.status === 'COMPLETED' && result.output) {
+                        console.log(`✅ 声音克隆成功 | voiceId: ${params.voiceId}`);
+                        return {
+                                   success: true,
+                                   voiceId: params.voiceId,
+                                   output: result.output
+                        };
+               }
+
+               // 如果状态是 IN_QUEUE 或 IN_PROGRESS，需要轮询
+               if (result.status === 'IN_QUEUE' || result.status === 'IN_PROGRESS') {
+                        console.log(`⏳ RunPod clone job ${result.status}, 开始轮询...`);
+                        const pollResult = await this.pollStatus(result.id);
+                        return {
+                                   success: true,
+                                   voiceId: params.voiceId,
+                                   output: pollResult
+                        };
+               }
+
+               throw new Error(`Unexpected RunPod status: ${result.status}`);
+
+        } catch (error) {
+               console.error(`❌ RunPod 声音克隆失败:`, error.message);
+               throw error;
+        }
+   }
+
+   /**
+      * 获取可用的声音列表
+         */
+   async listVoices() {
+        // 返回默认声音列表，因为 RunPod Serverless 不支持列出声音
+        return {
+               voices: {
+                        system: ['voice_01', 'voice_02', 'voice_03', 'voice_04', 'voice_05', 
+                                                  'voice_06', 'voice_07', 'voice_08', 'voice_09', 'voice_10',
+                                                  'voice_11', 'voice_12'],
+                        custom: []
+               }
+        };
+   }
+
+   /**
+      * 别名方法 - 兼容 voiceCloneService 的调用
+         */
+   async checkHealth() {
+        return this.healthCheck();
+   }
 }
 
 // 创建单例实例
