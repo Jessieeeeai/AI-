@@ -180,6 +180,10 @@ async function runMigrations() {
     // 迁移2：更新drafts表
     const { migrateUp: migrateDrafts } = await import('../migrations/update_drafts_table.js');
     await migrateDrafts();
+
+        // 迁移3：添加 user_voices 表 file_name 字段
+        const { migrateUp: migrateVoiceFilename } = await import('../migrations/add_voice_filename.js');
+        await migrateVoiceFilename();
     
     console.log('✅ 所有数据库迁移完成');
   } catch (error) {
