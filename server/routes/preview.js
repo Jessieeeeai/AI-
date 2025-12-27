@@ -120,8 +120,11 @@ router.post('/tts', async (req, res) => {
                                                                  const voice = await dbGet('SELECT audio_url FROM user_voices WHERE id = ?', [voiceId]);
                                                                  if (voice && voice.audio_url) {
                                                                                   console.log('🎤 使用数据库中的自定义声音:', voice.audio_url);
-                                                                                  return voice.audio_url;
-                                                                 }
+// 将本地路径转换为完整的HTTP URL
+                                                                                         const baseUrl = process.env.API_BASE_URL || 'https://videoai-api.onrender.com';
+                                                                                         const fullAudioUrl = voice.audio_url.startsWith('http') ? voice.audio_url : baseUrl + voice.audio_url;
+                                                                                         console.log('🔊 转换后的完整声音URL:', fullAudioUrl);
+                                                                                         return fullAudioUrl;}
                                                   } catch (err) {
                                                                  console.error('查询自定义声音失败:', err.message);
                                                   }
