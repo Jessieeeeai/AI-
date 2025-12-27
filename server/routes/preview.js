@@ -105,9 +105,26 @@ router.post('/tts', async (req, res) => {
                         // IndexTTS2 neosun/indextts2 镜像的API格式
                         // 必须参数: text, spk_audio_prompt (说话人参考音频路径)
                         // 可选参数: emo_vector, emo_alpha
+
+                          // 确定 spk_audio_prompt：支持自定义上传的声音URL
+                          const getSpkAudioPrompt = (voiceId) => {
+                                       // 如果 voiceId 是 URL（自定义上传的声音），直接使用
+                                       if (voiceId && (voiceId.startsWith('http://') || voiceId.startsWith('https://'))) {
+                                                      console.log('🎤 使用自定义上传声音:', voiceId);
+                                                      return voiceId;
+                                       }
+                                       // 否则从预设声音映射中查找
+                                       if (voiceId && VOICE_AUDIO_MAP[voiceId]) {
+                                                      console.log('🎤 使用预设声音:', voiceId);
+                                                      return VOICE_AUDIO_MAP[voiceId];
+                                       }
+                                       // 默认使用预设声音
+                                       console.log('🎤 使用默认声音');
+                                       return 'examples/voice_01.wav';
+                          };
                         const requestBody = {
                                    text: ttsParams.text,
-                                   spk_audio_prompt: VOICE_AUDIO_MAP[ttsParams.voiceId] || 'examples/voice_01.wav',
+                                   spk_audio_prompt: getSpkAudioPrompt(ttsParams.voiceId),
                                    emo_vector: ttsParams.emoVector,
                                    emo_alpha: ttsParams.emoAlpha
                         };
