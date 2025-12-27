@@ -108,12 +108,24 @@ router.post('/tts', async (req, res) => {
                         // 可选参数: emo_vector, emo_alpha
 
                           // 确定 spk_audio_prompt：支持自定义上传的声音URL
-                          const getSpkAudioPrompt = (voiceId) => {
+                          const getSpkAudioPrompt = async (voiceId) => {
                                        // 如果 voiceId 是 URL（自定义上传的声音），直接使用
                                        if (voiceId && (voiceId.startsWith('http://') || voiceId.startsWith('https://'))) {
                                                       console.log('🎤 使用自定义上传声音:', voiceId);
                                                       return voiceId;
                                        }
+                                     // 尝试从数据库查询自定义声音的 audio_url
+                                     if (voiceId && !VOICE_AUDIO_MAP[voiceId]) {
+                                                  try {
+                                                                 const voice = await dbGet('SELECT audio_url FROM user_voices WHERE id = ?', [voiceId]);
+                                                                 if (voice && voice.audio_url) {
+                                                                                  console.log('🎤 使用数据库中的自定义声音:', voice.audio_url);
+                                                                                  return voice.audio_url;
+                                                                 }
+                                                  } catch (err) {
+                                                                 console.error('查询自定义声音失败:', err.message);
+                                                  }
+                                     }
                                        // 否则从预设声音映射中查找
                                        if (voiceId && VOICE_AUDIO_MAP[voiceId]) {
                                                       console.log('🎤 使用预设声音:', voiceId);
@@ -125,7 +137,7 @@ router.post('/tts', async (req, res) => {
                           };
                         const requestBody = {
                                    text: ttsParams.text,
-                                   spk_audio_prompt: getSpkAudioPrompt(ttsParams.voiceId),
+                                   spk_audio_prompt: await getSpkAudioPrompt(ttsParams.voiceId),
                                    emo_vector: ttsParams.emoVector,
                                    emo_alpha: ttsParams.emoAlpha
                         };
