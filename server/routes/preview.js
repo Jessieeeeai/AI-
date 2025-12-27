@@ -49,14 +49,14 @@ router.post('/tts', async (req, res) => {
                text: text.trim(),
                voiceId: voiceId || 'male_magnetic',
                emoVector: [
-                        voiceSettings?.emotions?.happiness || 0.7,
-                        voiceSettings?.emotions?.anger || 0.0,
-                        voiceSettings?.emotions?.sadness || 0.1,
+                        voiceSettings?.emotions?.happiness ?? 0.7,
+                        voiceSettings?.emotions?.anger ?? 0.0,
+                        voiceSettings?.emotions?.sadness ?? 0.1,
                         0.0, // afraid
                         0.0, // disgusted
                         0.0, // melancholic
-                        voiceSettings?.emotions?.surprise || 0.3,
-                        1.0 - (voiceSettings?.emotions?.happiness || 0.7) // calm
+                        voiceSettings?.emotions?.surprise ?? 0.3,
+                        1.0 - (voiceSettings?.emotions?.happiness ?? 0.7) // calm
                       ],
                emoAlpha: 0.8
         };
