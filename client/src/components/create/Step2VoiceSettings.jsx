@@ -44,7 +44,7 @@ export default function Step2VoiceSettings({ data, updateData, onNext, onPrev })
         try {
                 const response = await uploadService.uploadVoice(file);
                 setUploadedVoice(response);
-                updateData({ voiceId: response.voiceId });
+                updateData({ customVoiceId: response.voiceId });
                 alert('声音文件上传成功！');
         } catch (error) {
                 setUploadError(error.message || '上传失败，请稍后重试');
