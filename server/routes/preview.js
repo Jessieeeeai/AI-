@@ -37,7 +37,9 @@ async function getCustomVoiceAudioUrl(voiceId) {
      if (!isCustomVoice(voiceId)) return null;
 
      try {
+              console.log('🔍 查询自定义声音, voiceId:', voiceId);
             const voice = await dbGet('SELECT audio_url FROM user_voices WHERE id = ?', [voiceId]);
+              console.log('🔍 数据库查询结果:', voice);
             if (voice && voice.audio_url) {
                      // 将本地路径转换为完整的HTTP URL
                      const baseUrl = process.env.API_BASE_URL || 'https://videoai-api.onrender.com';
