@@ -3,6 +3,7 @@ import FormData from 'form-data';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import os from 'os';
 import { dbRun, dbGet } from '../config/database.js';
 import { aiServicesConfig } from '../config/aiServices.js';
 import runpodClient from './runpodServerlessClient.js';
@@ -190,9 +191,23 @@ class VoiceCloneService {
                    const isHttpUrl = voice.audio_url.startsWith('http://') || voice.audio_url.startsWith('https://');
 
                    if (isHttpUrl) {
-                                // R2存储的HTTP URL，直接使用
-                                audioPath = voice.audio_url;
-                                console.log('🌐 使用R2 HTTP URL:', audioPath);
+        // R2存储的HTTP URL，需要下载到临时目录
+                            const tempDir = os.tmpdir();
+                            const urlParts = voice.audio_url.split('/');
+                            const tempFileName = `voice_${voiceId}_${Date.now()}.m4a`;
+                            audioPath = path.join(tempDir, tempFileName);
+
+                            console.log('🌐 下载R2音频到临时文件:', voice.audio_url, '->', audioPath);
+
+                            // 下载文件到临时目录
+                            const response = await axios({
+                                       method: 'GET',
+                                       url: voice.audio_url,
+                                       responseType: 'arraybuffer'
+                            });
+
+                            fs.writeFileSync(audioPath, Buffer.from(response.data));
+                            console.log('✅ 音频下载完成，文件大小:', response.data.byteLength, 'bytes');
                    } else {
                                 // 本地文件路径
                                 audioPath = path.join(__dirname, '../../', voice.audio_url);
